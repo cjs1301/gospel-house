@@ -1,140 +1,75 @@
-import Navigation from "@/components/Navigation";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Music, Bell, Users } from "lucide-react";
 
 export default async function Home() {
+    const session = await auth();
+    if (!session) {
+        redirect("/login");
+    }
     return (
-        <div className="min-h-screen flex flex-col">
-            <Navigation />
-
-            <main className="flex-grow">
-                <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+        <div className="min-h-screen bg-background">
+            {/* Main content - adjusted for left sidebar and mobile top bar */}
+            <main className="md:pl-72 md:pt-0 pt-16 pb-16 md:pb-0">
+                <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                    <div className="text-center md:text-left">
+                        <h1 className="text-4xl font-bold tracking-tight lg:text-6xl text-primary">
                             Gospel House
                         </h1>
-                        <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+                        <p className="mt-3 text-xl text-muted-foreground">
                             교회 사역팀을 위한 커뮤니티 플랫폼
                         </p>
                     </div>
 
-                    <div className="mt-16">
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                            <div className="pt-6">
-                                <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-md">
-                                    <div className="-mt-6">
-                                        <div>
-                                            <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                                                <svg
-                                                    className="h-6 w-6 text-white"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                                                    />
-                                                </svg>
-                                            </span>
-                                        </div>
-                                        <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
-                                            찬양팀
-                                        </h3>
-                                        <p className="mt-5 text-base text-gray-500">
-                                            매주 로테이션 체크 및 찬양 리스트 공유
-                                        </p>
-                                        <div className="mt-6">
-                                            <a
-                                                href="/worship"
-                                                className="inline-flex px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                바로가기
-                                            </a>
-                                        </div>
-                                    </div>
+                    <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <Card>
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-4">
+                                    <Music className="h-6 w-6 text-primary-foreground" />
                                 </div>
-                            </div>
+                                <CardTitle>찬양팀</CardTitle>
+                                <CardDescription>
+                                    매주 로테이션 체크 및 찬양 리스트 공유
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild className="w-full">
+                                    <a href="/worship">바로가기</a>
+                                </Button>
+                            </CardContent>
+                        </Card>
 
-                            <div className="pt-6">
-                                <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-md">
-                                    <div className="-mt-6">
-                                        <div>
-                                            <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                                                <svg
-                                                    className="h-6 w-6 text-white"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                                                    />
-                                                </svg>
-                                            </span>
-                                        </div>
-                                        <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
-                                            공지사항
-                                        </h3>
-                                        <p className="mt-5 text-base text-gray-500">
-                                            교회 사역팀별 공지사항 확인
-                                        </p>
-                                        <div className="mt-6">
-                                            <a
-                                                href="/announcements"
-                                                className="inline-flex px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                바로가기
-                                            </a>
-                                        </div>
-                                    </div>
+                        <Card>
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-4">
+                                    <Bell className="h-6 w-6 text-primary-foreground" />
                                 </div>
-                            </div>
+                                <CardTitle>공지사항</CardTitle>
+                                <CardDescription>교회 사역팀별 공지사항 확인</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild className="w-full">
+                                    <a href="/announcements">바로가기</a>
+                                </Button>
+                            </CardContent>
+                        </Card>
 
-                            <div className="pt-6">
-                                <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-md">
-                                    <div className="-mt-6">
-                                        <div>
-                                            <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                                                <svg
-                                                    className="h-6 w-6 text-white"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                                                    />
-                                                </svg>
-                                            </span>
-                                        </div>
-                                        <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
-                                            사역팀
-                                        </h3>
-                                        <p className="mt-5 text-base text-gray-500">
-                                            다양한 사역팀 정보 및 일정 확인
-                                        </p>
-                                        <div className="mt-6">
-                                            <a
-                                                href="/teams"
-                                                className="inline-flex px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                바로가기
-                                            </a>
-                                        </div>
-                                    </div>
+                        <Card>
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-4">
+                                    <Users className="h-6 w-6 text-primary-foreground" />
                                 </div>
-                            </div>
-                        </div>
+                                <CardTitle>사역팀</CardTitle>
+                                <CardDescription>다양한 사역팀 정보 및 일정 확인</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild className="w-full">
+                                    <a href="/teams">바로가기</a>
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </main>
