@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button, Input } from "@heroui/react";
 
 interface Church {
     id: string;
@@ -64,7 +61,6 @@ export default function OnboardingForm({ churches, userId, userEmail, userName }
                 throw new Error("Failed to complete onboarding");
             }
 
-            // Update the session to reflect the new church selection
             await updateSession();
             router.refresh();
             router.push("/");
@@ -78,87 +74,90 @@ export default function OnboardingForm({ churches, userId, userEmail, userName }
 
     return (
         <div className="container max-w-2xl mx-auto p-6">
-            <Card>
-                <CardContent className="pt-6">
-                    {step === 1 ? (
-                        <>
-                            <h2 className="text-xl font-semibold mb-4">소속 교회 선택</h2>
-                            <div className="mb-4">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+                {step === 1 ? (
+                    <>
+                        <h2 className="text-xl font-semibold mb-4">소속 교회 선택</h2>
+                        <div className="mb-4">
+                            <Input
+                                type="text"
+                                placeholder="교회 이름으로 검색"
+                                value={searchTerm}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    setSearchTerm(e.target.value)
+                                }
+                                className="w-full"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            {filteredChurches.map((church) => (
+                                <Button
+                                    key={church.id}
+                                    color="default"
+                                    onClick={() => handleChurchSelect(church)}
+                                    className="w-full justify-start h-auto py-4 hover:bg-gray-100"
+                                >
+                                    <div className="text-left">
+                                        <div className="font-medium">{church.name}</div>
+                                        {church.address && (
+                                            <div className="text-sm text-gray-500">
+                                                {church.address}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Button>
+                            ))}
+                            {filteredChurches.length === 0 && (
+                                <div className="text-center text-gray-500 py-4">
+                                    검색 결과가 없습니다
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="text-xl font-semibold mb-4">정보 확인</h2>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">이메일</label>
+                                <div className="p-2 bg-gray-100 rounded-md">{userEmail}</div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">이름</label>
                                 <Input
                                     type="text"
-                                    placeholder="교회 이름으로 검색"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    value={formData.name}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            name: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full"
                                 />
                             </div>
                             <div className="space-y-2">
-                                {filteredChurches.map((church) => (
-                                    <Button
-                                        key={church.id}
-                                        variant="outline"
-                                        onClick={() => handleChurchSelect(church)}
-                                        className="w-full justify-start h-auto py-4"
-                                    >
-                                        <div className="text-left">
-                                            <div className="font-medium">{church.name}</div>
-                                            {church.address && (
-                                                <div className="text-sm text-muted-foreground">
-                                                    {church.address}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Button>
-                                ))}
-                                {filteredChurches.length === 0 && (
-                                    <div className="text-center text-muted-foreground py-4">
-                                        검색 결과가 없습니다
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <h2 className="text-xl font-semibold mb-4">정보 확인</h2>
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>이메일</Label>
-                                    <div className="p-2 bg-muted rounded-md">{userEmail}</div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>이름</Label>
-                                    <Input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                name: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>선택한 교회</Label>
-                                    <div className="p-2 bg-muted rounded-md">
-                                        {formData.selectedChurchName}
-                                    </div>
-                                </div>
-                                <div className="pt-4 flex justify-between">
-                                    <Button variant="outline" onClick={() => setStep(1)}>
-                                        이전
-                                    </Button>
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={isLoading || !formData.name || !formData.churchId}
-                                    >
-                                        {isLoading ? "처리 중..." : "완료"}
-                                    </Button>
+                                <label className="text-sm font-medium">선택한 교회</label>
+                                <div className="p-2 bg-gray-100 rounded-md">
+                                    {formData.selectedChurchName}
                                 </div>
                             </div>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
+                            <div className="pt-4 flex justify-between">
+                                <Button color="secondary" onClick={() => setStep(1)}>
+                                    이전
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    onClick={handleSubmit}
+                                    disabled={isLoading || !formData.name || !formData.churchId}
+                                >
+                                    {isLoading ? "처리 중..." : "완료"}
+                                </Button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

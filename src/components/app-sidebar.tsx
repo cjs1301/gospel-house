@@ -3,10 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Home, Bell, Users, LogOut, LogIn, ScrollText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import {
+    HomeIcon,
+    BellIcon,
+    UserGroupIcon,
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    DocumentTextIcon,
+} from "@heroicons/react/24/outline";
+import { Button } from "@heroui/react";
+import { Avatar } from "@heroui/react";
+
+// Utility function to combine class names
+const cn = (...classes: (string | undefined | boolean)[]) => classes.filter(Boolean).join(" ");
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -16,18 +25,19 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
 
     // 데스크탑용 네비게이션 아이템 (알림 포함)
     const desktopNavigationItems = [
-        { href: "/", label: "홈", icon: Home },
-        { href: "/teams", label: "사역팀", icon: Users },
-        { href: "/announcements", label: "공지사항", icon: ScrollText },
-        { href: "/notifications", label: "알림", icon: Bell },
+        { href: "/", label: "홈", icon: HomeIcon },
+        { href: "/teams", label: "사역팀", icon: UserGroupIcon },
+        { href: "/announcements", label: "공지사항", icon: DocumentTextIcon },
+        { href: "/notifications", label: "알림", icon: BellIcon },
         {
             href: "/profile",
             label: "내 정보",
             icon: ({ className }: { className?: string }) => (
-                <Avatar className={cn("h-6 w-6", className)}>
-                    <AvatarImage src={session?.user?.image || ""} />
-                    <AvatarFallback>{session?.user?.name?.[0]}</AvatarFallback>
-                </Avatar>
+                <Avatar
+                    src={session?.user?.image || ""}
+                    alt={session?.user?.name || ""}
+                    className={cn("h-6 w-6", className)}
+                />
             ),
         },
     ];
@@ -48,11 +58,9 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 <Link href="/" className="text-xl font-bold text-primary">
                     Gospel House
                 </Link>
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/notifications">
-                        <Bell className="h-6 w-6" />
-                    </Link>
-                </Button>
+                <Link href="/notifications" className="p-2">
+                    <BellIcon className="h-6 w-6" />
+                </Link>
             </div>
 
             {/* Desktop - Left Sidebar */}
@@ -75,8 +83,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                                             className={cn(
                                                 "flex items-center gap-x-2 px-4 py-3 text-sm font-medium rounded-md transition-colors",
                                                 pathname === item.href
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "text-muted-foreground hover:bg-muted"
+                                                    ? "bg-primary text-white"
+                                                    : "text-gray-500 hover:bg-gray-100"
                                             )}
                                         >
                                             <Icon className="h-5 w-5" />
@@ -88,31 +96,33 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="flex-shrink-0 border-t p-4">
                             {isLoading ? (
-                                <div className="h-8 w-full bg-muted rounded animate-pulse" />
+                                <div className="h-8 w-full bg-gray-100 rounded animate-pulse" />
                             ) : session ? (
                                 <div className="flex items-center w-full justify-between">
                                     <div className="flex items-center">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={session.user?.image || ""} />
-                                            <AvatarFallback>
-                                                {session.user?.name?.[0]}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <span className="ml-3 text-sm font-medium text-muted-foreground">
+                                        <Avatar
+                                            src={session.user?.image || ""}
+                                            alt={session.user?.name || ""}
+                                            className="h-8 w-8"
+                                        />
+                                        <span className="ml-3 text-sm font-medium text-gray-500">
                                             {session.user?.name}
                                         </span>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
+                                    <button
                                         onClick={() => signOut({ callbackUrl: "/" })}
+                                        className="p-2 hover:bg-gray-100 rounded-md"
                                     >
-                                        <LogOut className="h-5 w-5" />
-                                    </Button>
+                                        <ArrowRightIcon className="h-5 w-5" />
+                                    </button>
                                 </div>
                             ) : (
-                                <Button className="w-full" onClick={() => signIn("kakao")}>
-                                    <LogIn className="mr-2 h-5 w-5" />
+                                <Button
+                                    color="primary"
+                                    className="w-full"
+                                    onClick={() => signIn("kakao")}
+                                >
+                                    <ArrowLeftIcon className="mr-2 h-5 w-5" />
                                     로그인
                                 </Button>
                             )}
@@ -138,7 +148,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                                 href={item.href}
                                 className={cn(
                                     "flex flex-col items-center justify-center w-16",
-                                    isActive ? "text-primary" : "text-muted-foreground"
+                                    isActive ? "text-primary" : "text-gray-500"
                                 )}
                             >
                                 <Icon
