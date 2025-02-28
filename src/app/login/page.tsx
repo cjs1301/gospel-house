@@ -34,7 +34,7 @@ export default function LoginPage() {
                 <div className="space-y-4">
                     <Button
                         color="default"
-                        onClick={handleKakaoSignIn}
+                        onPress={handleKakaoSignIn}
                         disabled={isLoading}
                         className="w-full bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#000000] hover:text-[#000000]/90"
                     >
