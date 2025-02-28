@@ -26,7 +26,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     // 데스크탑용 네비게이션 아이템 (알림 포함)
     const desktopNavigationItems = [
         { href: "/", label: "홈", icon: HomeIcon },
-        { href: "/teams", label: "사역팀", icon: UserGroupIcon },
+        { href: "/ministries", label: "사역팀", icon: UserGroupIcon },
         { href: "/announcements", label: "공지사항", icon: DocumentTextIcon },
         { href: "/notifications", label: "알림", icon: BellIcon },
         {

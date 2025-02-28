@@ -61,57 +61,52 @@ export default async function Home() {
     return (
         <div className="min-h-screen bg-background">
             {/* Main content - adjusted for left sidebar and mobile top bar */}
-            <main className="md:pl-72 md:pt-0 pt-16 pb-16 md:pb-0">
-                <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                    <div className="text-center md:text-left">
-                        <h1 className="text-4xl font-bold tracking-tight lg:text-6xl text-primary">
-                            Gospel House
-                        </h1>
-                        <p className="mt-3 text-xl text-gray-500">
-                            교회 사역팀을 위한 커뮤니티 플랫폼
-                        </p>
+
+            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="text-center md:text-left">
+                    <h1 className="text-4xl font-bold tracking-tight lg:text-6xl text-primary">
+                        Gospel House
+                    </h1>
+                    <p className="mt-3 text-xl text-gray-500">교회 사역팀을 위한 커뮤니티 플랫폼</p>
+                </div>
+
+                <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <div className="space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                                <MusicalNoteIcon className="h-6 w-6 text-white" />
+                            </div>
+                            <h3 className="text-lg font-semibold">찬양팀</h3>
+                            <p className="text-gray-500">매주 로테이션 체크 및 찬양 리스트 공유</p>
+                            <Button color="primary" className="w-full">
+                                바로가기
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <div className="bg-white p-6 rounded-lg shadow-lg">
-                            <div className="space-y-4">
-                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-                                    <MusicalNoteIcon className="h-6 w-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold">찬양팀</h3>
-                                <p className="text-gray-500">
-                                    매주 로테이션 체크 및 찬양 리스트 공유
-                                </p>
-                                <Button color="primary" className="w-full">
-                                    바로가기
-                                </Button>
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <div className="space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                                <BellIcon className="h-6 w-6 text-white" />
                             </div>
+                            <h3 className="text-lg font-semibold">공지사항</h3>
+                            <p className="text-gray-500">교회 사역팀별 공지사항 확인</p>
+                            <Button color="primary" className="w-full">
+                                바로가기
+                            </Button>
                         </div>
+                    </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-lg">
-                            <div className="space-y-4">
-                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-                                    <BellIcon className="h-6 w-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold">공지사항</h3>
-                                <p className="text-gray-500">교회 사역팀별 공지사항 확인</p>
-                                <Button color="primary" className="w-full">
-                                    바로가기
-                                </Button>
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <div className="space-y-4">
+                            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                                <UserGroupIcon className="h-6 w-6 text-white" />
                             </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-lg shadow-lg">
-                            <div className="space-y-4">
-                                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-                                    <UserGroupIcon className="h-6 w-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold">사역팀</h3>
-                                <p className="text-gray-500">다양한 사역팀 정보 및 일정 확인</p>
-                                <Button color="primary" className="w-full">
-                                    바로가기
-                                </Button>
-                            </div>
+                            <h3 className="text-lg font-semibold">사역팀</h3>
+                            <p className="text-gray-500">다양한 사역팀 정보 및 일정 확인</p>
+                            <Button color="primary" className="w-full">
+                                바로가기
+                            </Button>
                         </div>
                     </div>
                 </div>

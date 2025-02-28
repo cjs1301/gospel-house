@@ -22,6 +22,8 @@ model User {
   // Church and Ministry relationships
   churches     ChurchMember[]
   ministries   MinistryMember[]
+  schedules    MinistrySchedule[]
+  ministryNotices MinistryNotice[]
 
   // Feed relationships
   feeds        ChurchFeed[]
@@ -147,12 +149,13 @@ model Ministry {
   description String?
   
   // Church relationship
-  churchId    String
+  churchId    String     @map("church_id")
   church      Church     @relation(fields: [churchId], references: [id], onDelete: Cascade)
   
   // Relationships
   members     MinistryMember[]
   notices     MinistryNotice[]
+  schedules   MinistrySchedule[]
   announcements MinistryAnnouncement[]
 
   createdAt   DateTime   @default(now()) @map("created_at")
@@ -198,18 +201,19 @@ model ChurchNotice {
 
 // Ministry Notice (사역팀 내부 공지사항)
 model MinistryNotice {
-  id          String   @id @default(cuid())
-  title       String
-  content     String
-  isImportant Boolean  @default(false) @map("is_important")
-  
-  // Ministry relationship
-  ministryId  String
-  ministry    Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  ministryId String   @map("ministry_id")
+  userId     String   @map("user_id")
+  title      String
+  content    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([ministryId])
+  @@index([userId])
   @@map("ministry_notices")
 }
 
@@ -228,6 +232,25 @@ model MinistryAnnouncement {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("ministry_announcements")
+}
+
+// Ministry Schedule (사역팀 일정)
+model MinistrySchedule {
+  id         String   @id @default(cuid())
+  ministryId String @map("ministry_id")
+  userId     String @map("user_id")
+  date       DateTime
+  position   String
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ministryId])
+  @@index([userId])
+  @@map("ministry_schedules")
 }
 
 // Church Feed Model (교회 피드)
