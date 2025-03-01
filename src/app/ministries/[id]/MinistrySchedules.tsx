@@ -2,32 +2,37 @@
 
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Calendar } from "@heroui/calendar";
+import { Calendar, DateValue } from "@heroui/calendar";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { User } from "@heroui/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Chip } from "@heroui/chip";
 import { useState } from "react";
 
-interface MinistrySchedule {
+interface MinistryEvent {
     id: string;
-    date: string;
-    position: string;
-    status: string;
-    user: {
-        name: string | null;
-        image: string | null;
-    };
+    eventDate: string;
+    startTime: string;
+    endTime: string;
 }
 
 interface MinistryNotice {
     id: string;
     title: string;
     content: string;
-    eventDate: string | null;
-    startTime: string | null;
-    endTime: string | null;
     createdAt: string;
+    events: MinistryEvent[];
+    user: {
+        name: string | null;
+        image: string | null;
+    };
+}
+
+interface MinistrySchedule {
+    id: string;
+    date: string;
+    position: string;
+    status: string;
     user: {
         name: string | null;
         image: string | null;
@@ -66,23 +71,35 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
     };
 
     // 특정 날짜에 일정이나 공지가 있는지 확인하는 함수
-    const isDateUnavailable = (date: any) => {
+    const isDateUnavailable = (date: DateValue) => {
         const formattedDate = format(date.toDate(getLocalTimeZone()), "yyyy-MM-dd");
 
-        const hasSchedule = schedules.some((schedule) => schedule.date.startsWith(formattedDate));
+        const hasSchedule = schedules.some(
+            (schedule) => format(new Date(schedule.date), "yyyy-MM-dd") === formattedDate
+        );
 
-        const hasNotice = notices.some((notice) => notice.eventDate?.startsWith(formattedDate));
+        const hasNotice = notices.some((notice) =>
+            notice.events.some(
+                (event) => format(new Date(event.eventDate), "yyyy-MM-dd") === formattedDate
+            )
+        );
 
         return hasSchedule || hasNotice;
     };
 
     // 선택된 날짜의 일정과 공지들
-    const selectedDateSchedules = schedules.filter((schedule) =>
-        schedule.date.startsWith(format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd"))
+    const selectedDateSchedules = schedules.filter(
+        (schedule) =>
+            format(new Date(schedule.date), "yyyy-MM-dd") ===
+            format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd")
     );
 
     const selectedDateNotices = notices.filter((notice) =>
-        notice.eventDate?.startsWith(format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd"))
+        notice.events.some(
+            (event) =>
+                format(new Date(event.eventDate), "yyyy-MM-dd") ===
+                format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd")
+        )
     );
     console.log(selectedDateNotices);
     console.log(selectedDateSchedules);
@@ -128,14 +145,18 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                                     <p className="text-gray-600 whitespace-pre-wrap mb-4">
                                         {notice.content}
                                     </p>
-                                    {notice.startTime && notice.endTime && (
+                                    {notice.events[0] && (
                                         <p className="text-sm text-gray-500">
                                             시간:{" "}
-                                            {format(new Date(notice.startTime), "a h:mm", {
-                                                locale: ko,
-                                            })}{" "}
+                                            {format(
+                                                new Date(notice.events[0].startTime),
+                                                "a h:mm",
+                                                {
+                                                    locale: ko,
+                                                }
+                                            )}{" "}
                                             ~{" "}
-                                            {format(new Date(notice.endTime), "a h:mm", {
+                                            {format(new Date(notice.events[0].endTime), "a h:mm", {
                                                 locale: ko,
                                             })}
                                         </p>

@@ -1,97 +1,75 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Modal, Input, Textarea } from "@heroui/react";
+import { formatDistanceToNow } from "date-fns";
+import { ko } from "date-fns/locale";
+import { Card, CardHeader, CardBody } from "@heroui/card";
+import { User } from "@heroui/react";
+import { Divider } from "@heroui/divider";
 
-interface MinistryNoticesProps {
-    ministryId: string;
-    isMember: boolean;
+interface MinistryNotice {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: string;
+    user: {
+        name: string | null;
+        image: string | null;
+    };
 }
 
-export default function MinistryNotices({ ministryId, isMember }: MinistryNoticesProps) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
+interface MinistryNoticesProps {
+    notices: MinistryNotice[];
+}
 
-    const handleSubmit = async () => {
-        if (!title || !content) return;
-
-        try {
-            const response = await fetch("/api/ministry/notices", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ministryId,
-                    title,
-                    content,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to create notice");
-            }
-
-            // 성공 후 상태 초기화
-            setTitle("");
-            setContent("");
-            setIsModalOpen(false);
-        } catch (error) {
-            console.error("Error creating notice:", error);
-            alert("공지사항 등록에 실패했습니다. 다시 시도해주세요.");
-        }
-    };
-
+export default function MinistryNotices({ notices }: MinistryNoticesProps) {
     return (
         <div className="space-y-4">
-            {isMember && (
-                <div className="flex justify-end">
-                    <Button color="primary" onClick={() => setIsModalOpen(true)}>
-                        공지사항 작성
-                    </Button>
-                </div>
+            {notices.map((notice) => (
+                <Card key={notice.id} className="w-full">
+                    <CardHeader className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">{notice.title}</h3>
+                            <span className="text-sm text-default-500">
+                                {formatDistanceToNow(new Date(notice.createdAt), {
+                                    addSuffix: true,
+                                    locale: ko,
+                                })}
+                            </span>
+                        </div>
+                        <Divider className="my-2" />
+                    </CardHeader>
+                    <CardBody className="pt-2">
+                        <p className="text-default-600 whitespace-pre-wrap mb-4">
+                            {notice.content}
+                        </p>
+                        <div className="flex items-center justify-between mt-4">
+                            <User
+                                name={notice.user.name || "알 수 없음"}
+                                description="작성자"
+                                avatarProps={{
+                                    src: notice.user.image || undefined,
+                                    size: "sm",
+                                    radius: "full",
+                                }}
+                                classNames={{
+                                    base: "min-w-fit",
+                                    description: "text-tiny text-default-500",
+                                    name: "text-sm",
+                                }}
+                            />
+                        </div>
+                    </CardBody>
+                </Card>
+            ))}
+            {notices.length === 0 && (
+                <Card>
+                    <CardBody>
+                        <div className="text-center text-default-500 py-8">
+                            등록된 공지사항이 없습니다.
+                        </div>
+                    </CardBody>
+                </Card>
             )}
-
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="공지사항 작성">
-                <div className="space-y-4 py-4">
-                    <Input
-                        type="text"
-                        placeholder="제목"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                    />
-                    <Textarea
-                        placeholder="내용을 입력하세요"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        rows={5}
-                    />
-                    <Button
-                        color="primary"
-                        className="w-full"
-                        disabled={!title || !content}
-                        onClick={handleSubmit}
-                    >
-                        등록
-                    </Button>
-                </div>
-            </Modal>
-
-            {/* 공지사항 목록 - 나중에 서버 컴포넌트로 분리 */}
-            <div className="space-y-4">
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h3 className="text-lg font-semibold">3월 첫째주 찬양곡</h3>
-                    <p className="text-gray-500 text-sm mt-1">2024-03-01</p>
-                    <p className="mt-2">
-                        1. 나의 기도하는 것보다
-                        <br />
-                        2. 주의 임재 앞에 잠잠해
-                        <br />
-                        3. 주님의 영광 나타나셨네
-                    </p>
-                </div>
-            </div>
         </div>
     );
 }

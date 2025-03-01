@@ -53,28 +53,19 @@ export default function OnboardingForm({ churches, userName }: Props) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const errors: Record<string, string> = {};
-
-        if (!formData.name || formData.name.length < 2) {
-            errors.name = "이름은 2글자 이상이어야 합니다.";
-        }
-        if (!formData.churchId) {
-            errors.churchId = "교회를 선택해주세요.";
-        }
-
-        if (Object.keys(errors).length > 0) {
-            setValidationErrors(errors);
-            return;
-        }
 
         try {
+            // Zod validation
+            const validatedData = onboardingSchema.parse(formData);
+            setValidationErrors({});
+
             setIsLoading(true);
             const response = await fetch("/api/church/join", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(validatedData),
             });
 
             if (!response.ok) {
@@ -86,6 +77,17 @@ export default function OnboardingForm({ churches, userName }: Props) {
             router.refresh();
             router.push("/");
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                const errors: Record<string, string> = {};
+                error.errors.forEach((err) => {
+                    if (err.path[0]) {
+                        errors[err.path[0].toString()] = err.message;
+                    }
+                });
+                setValidationErrors(errors);
+                return;
+            }
+
             console.error("Error during onboarding:", error);
             alert(
                 error instanceof Error

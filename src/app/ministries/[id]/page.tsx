@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/prisma";
-import MinistryNotices from "@/components/ministry/MinistryNotices";
-import MinistrySchedules from "@/components/ministry/MinistrySchedules";
+import MinistryNotices from "@/app/ministries/[id]/MinistryNotices";
+import MinistrySchedules from "@/app/ministries/[id]/MinistrySchedules";
 import { Button } from "@heroui/react";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +58,7 @@ export default async function MinistryPage({ params }: Props) {
                             image: true,
                         },
                     },
+                    events: true,
                 },
                 orderBy: {
                     createdAt: "desc",
@@ -82,6 +83,25 @@ export default async function MinistryPage({ params }: Props) {
     if (!ministry) {
         redirect("/ministries");
     }
+
+    // Transform dates to strings for serialization
+    const serializedMinistry = {
+        ...ministry,
+        notices: ministry.notices.map((notice) => ({
+            ...notice,
+            createdAt: notice.createdAt.toISOString(),
+            events: notice.events.map((event) => ({
+                ...event,
+                eventDate: event.eventDate.toISOString(),
+                startTime: event.startTime.toISOString(),
+                endTime: event.endTime.toISOString(),
+            })),
+        })),
+        schedules: ministry.schedules.map((schedule) => ({
+            ...schedule,
+            date: schedule.date.toISOString(),
+        })),
+    };
 
     const isMember = ministry.members.length > 0;
 
@@ -114,15 +134,15 @@ export default async function MinistryPage({ params }: Props) {
                     {/* 공지사항 섹션 */}
                     <div>
                         <h2 className="text-xl font-semibold mb-4">공지사항</h2>
-                        <MinistryNotices notices={ministry.notices} />
+                        <MinistryNotices notices={serializedMinistry.notices} />
                     </div>
 
                     {/* 일정 섹션 */}
                     <div>
                         <h2 className="text-xl font-semibold mb-4">일정</h2>
                         <MinistrySchedules
-                            schedules={ministry.schedules}
-                            notices={ministry.notices}
+                            schedules={serializedMinistry.schedules}
+                            notices={serializedMinistry.notices}
                         />
                     </div>
                 </div>

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { ministryId, title, content } = body;
+        const { ministryId, title, content, startDate, endDate } = body;
 
         if (!ministryId || !title || !content) {
             return new NextResponse("Missing required fields", { status: 400 });
@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
                 content,
                 ministryId,
                 userId: session.user.id,
+                startDate,
+                endDate,
             },
         });
 
