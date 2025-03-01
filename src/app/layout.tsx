@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "./providers";
+
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],

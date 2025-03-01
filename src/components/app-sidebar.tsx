@@ -12,7 +12,7 @@ import {
     DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/react";
-import { Avatar } from "@heroui/react";
+import { Avatar, User } from "@heroui/react";
 
 // Utility function to combine class names
 const cn = (...classes: (string | undefined | boolean)[]) => classes.filter(Boolean).join(" ");
@@ -99,19 +99,24 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                                 <div className="h-8 w-full bg-gray-100 rounded animate-pulse" />
                             ) : session ? (
                                 <div className="flex items-center w-full justify-between">
-                                    <div className="flex items-center">
-                                        <Avatar
-                                            src={session.user?.image || ""}
-                                            alt={session.user?.name || ""}
-                                            className="h-8 w-8"
-                                        />
-                                        <span className="ml-3 text-sm font-medium text-gray-500">
-                                            {session.user?.name}
-                                        </span>
-                                    </div>
+                                    <User
+                                        name={session.user?.name || ""}
+                                        description={session.user?.email || ""}
+                                        avatarProps={{
+                                            src: session.user?.image || "",
+                                            alt: session.user?.name || "",
+                                            size: "sm",
+                                        }}
+                                        classNames={{
+                                            base: "flex-1",
+                                            wrapper: "truncate",
+                                            name: "text-sm font-medium text-gray-700",
+                                            description: "text-xs text-gray-500",
+                                        }}
+                                    />
                                     <button
                                         onClick={() => signOut({ callbackUrl: "/" })}
-                                        className="p-2 hover:bg-gray-100 rounded-md"
+                                        className="p-2 hover:bg-gray-100 rounded-md ml-2"
                                     >
                                         <ArrowRightIcon className="h-5 w-5" />
                                     </button>
@@ -120,7 +125,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                                 <Button
                                     color="primary"
                                     className="w-full"
-                                    onClick={() => signIn("kakao")}
+                                    onPress={() => signIn("kakao")}
                                 >
                                     <ArrowLeftIcon className="mr-2 h-5 w-5" />
                                     로그인

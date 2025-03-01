@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getMinistrySchedules } from "@/lib/api";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Calendar } from "@heroui/calendar";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { User } from "@heroui/react";
+import { today, getLocalTimeZone } from "@internationalized/date";
+import { Chip } from "@heroui/chip";
+import { useState } from "react";
 
 interface MinistrySchedule {
     id: string;
@@ -16,39 +20,29 @@ interface MinistrySchedule {
     };
 }
 
-interface MinistrySchedulesProps {
-    ministryId: string;
+interface MinistryNotice {
+    id: string;
+    title: string;
+    content: string;
+    eventDate: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    createdAt: string;
+    user: {
+        name: string | null;
+        image: string | null;
+    };
 }
 
-export default function MinistrySchedules({ ministryId }: MinistrySchedulesProps) {
-    const [schedules, setSchedules] = useState<MinistrySchedule[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface MinistrySchedulesProps {
+    schedules: MinistrySchedule[];
+    notices: MinistryNotice[];
+}
 
-    useEffect(() => {
-        async function fetchSchedules() {
-            try {
-                const data = await getMinistrySchedules(ministryId);
-                setSchedules(data);
-            } catch (err) {
-                console.error(err);
-                setError("일정을 불러오는데 실패했습니다.");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchSchedules();
-    }, [ministryId]);
-
-    if (isLoading) {
-        return <div className="p-4">로딩 중...</div>;
-    }
-
-    if (error) {
-        return <div className="p-4 text-red-500">{error}</div>;
-    }
-
+export default function MinistrySchedules({ schedules, notices }: MinistrySchedulesProps) {
+    const [selectedDate, setSelectedDate] = useState(today(getLocalTimeZone()));
+    console.log(schedules);
+    console.log(notices);
     const getStatusColor = (status: string) => {
         switch (status) {
             case "APPROVED":
@@ -71,32 +65,150 @@ export default function MinistrySchedules({ ministryId }: MinistrySchedulesProps
         }
     };
 
+    // 특정 날짜에 일정이나 공지가 있는지 확인하는 함수
+    const isDateUnavailable = (date: any) => {
+        const formattedDate = format(date.toDate(getLocalTimeZone()), "yyyy-MM-dd");
+
+        const hasSchedule = schedules.some((schedule) => schedule.date.startsWith(formattedDate));
+
+        const hasNotice = notices.some((notice) => notice.eventDate?.startsWith(formattedDate));
+
+        return hasSchedule || hasNotice;
+    };
+
+    // 선택된 날짜의 일정과 공지들
+    const selectedDateSchedules = schedules.filter((schedule) =>
+        schedule.date.startsWith(format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd"))
+    );
+
+    const selectedDateNotices = notices.filter((notice) =>
+        notice.eventDate?.startsWith(format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd"))
+    );
+    console.log(selectedDateNotices);
+    console.log(selectedDateSchedules);
+
     return (
-        <div className="space-y-4">
-            {schedules.map((schedule) => (
-                <div
-                    key={schedule.id}
-                    className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div>
-                            <h3 className="text-lg font-semibold">
-                                {format(new Date(schedule.date), "M월 d일 (E)", { locale: ko })}
-                            </h3>
-                            <p className="text-gray-600">{schedule.position}</p>
-                        </div>
-                        <span className={`text-sm font-medium ${getStatusColor(schedule.status)}`}>
-                            {getStatusText(schedule.status)}
-                        </span>
+        <div className="space-y-6">
+            <Card className="w-full">
+                <CardBody className="items-center">
+                    <Calendar
+                        value={selectedDate}
+                        onChange={setSelectedDate}
+                        isDateUnavailable={isDateUnavailable}
+                        calendarWidth={300}
+                    />
+                </CardBody>
+            </Card>
+
+            {/* 선택된 날짜의 일정과 공지 목록 */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                    {format(selectedDate.toDate(getLocalTimeZone()), "M월 d일 (E)", { locale: ko })}{" "}
+                    일정
+                </h3>
+
+                {/* 공지사항 섹션 */}
+                {selectedDateNotices.length > 0 && (
+                    <div className="space-y-4">
+                        {selectedDateNotices.map((notice) => (
+                            <Card key={notice.id} className="w-full">
+                                <CardHeader className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Chip color="warning" variant="flat" size="sm">
+                                                공지
+                                            </Chip>
+                                            <h4 className="text-lg font-semibold">
+                                                {notice.title}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardBody>
+                                    <p className="text-gray-600 whitespace-pre-wrap mb-4">
+                                        {notice.content}
+                                    </p>
+                                    {notice.startTime && notice.endTime && (
+                                        <p className="text-sm text-gray-500">
+                                            시간:{" "}
+                                            {format(new Date(notice.startTime), "a h:mm", {
+                                                locale: ko,
+                                            })}{" "}
+                                            ~{" "}
+                                            {format(new Date(notice.endTime), "a h:mm", {
+                                                locale: ko,
+                                            })}
+                                        </p>
+                                    )}
+                                    <div className="mt-4">
+                                        <User
+                                            name={notice.user.name || "알 수 없음"}
+                                            description="작성자"
+                                            avatarProps={{
+                                                src: notice.user.image || undefined,
+                                                size: "sm",
+                                                radius: "full",
+                                            }}
+                                            classNames={{
+                                                base: "min-w-fit",
+                                                description: "text-tiny text-default-500",
+                                                name: "text-sm",
+                                            }}
+                                        />
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        ))}
                     </div>
-                    <div className="mt-2 text-sm text-gray-500">
-                        신청자: {schedule.user.name || "알 수 없음"}
+                )}
+
+                {/* 일정 섹션 */}
+                {selectedDateSchedules.length > 0 && (
+                    <div className="space-y-4">
+                        {selectedDateSchedules.map((schedule) => (
+                            <Card key={schedule.id} className="w-full">
+                                <CardBody>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Chip color="primary" variant="flat" size="sm">
+                                                일정
+                                            </Chip>
+                                            <p className="text-gray-600">{schedule.position}</p>
+                                        </div>
+                                        <span
+                                            className={`text-sm font-medium ${getStatusColor(
+                                                schedule.status
+                                            )}`}
+                                        >
+                                            {getStatusText(schedule.status)}
+                                        </span>
+                                    </div>
+                                    <div className="mt-2">
+                                        <User
+                                            name={schedule.user.name || "알 수 없음"}
+                                            avatarProps={{
+                                                src: schedule.user.image || undefined,
+                                                size: "sm",
+                                                radius: "full",
+                                            }}
+                                            classNames={{
+                                                base: "min-w-fit",
+                                                name: "text-sm",
+                                            }}
+                                        />
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        ))}
                     </div>
-                </div>
-            ))}
-            {schedules.length === 0 && (
-                <div className="text-center text-gray-500 py-8">등록된 일정이 없습니다.</div>
-            )}
+                )}
+
+                {selectedDateSchedules.length === 0 && selectedDateNotices.length === 0 && (
+                    <div className="text-center text-gray-500 py-8">
+                        선택한 날짜에 등록된 일정이 없습니다.
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

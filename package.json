@@ -13,11 +13,14 @@
         "@auth/prisma-adapter": "^2.7.4",
         "@headlessui/react": "^2.2.0",
         "@heroicons/react": "^2.2.0",
+        "@heroui/form": "^2.1.14",
         "@heroui/react": "^2.7.2",
+        "@internationalized/date": "^3.7.0",
         "@neondatabase/serverless": "^0.10.4",
         "@prisma/adapter-neon": "^6.4.1",
         "@prisma/client": "^6.4.1",
         "@prisma/extension-accelerate": "^1.2.2",
+        "@react-aria/i18n": "^3.12.5",
         "@serwist/next": "^9.0.12",
         "clsx": "^2.1.1",
         "date-fns": "^4.1.0",
@@ -32,7 +35,8 @@
         "serwist": "^9.0.12",
         "tailwind-merge": "^3.0.2",
         "web-push": "^3.6.7",
-        "ws": "^8.18.1"
+        "ws": "^8.18.1",
+        "zod": "^3.24.2"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",

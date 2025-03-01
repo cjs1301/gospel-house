@@ -40,7 +40,7 @@ export default async function MinistryPage({ params }: Props) {
 
     const { id } = await params;
 
-    // 사역팀 정보 조회
+    // 사역팀 정보와 관련 데이터를 한 번에 조회
     const ministry = await prisma.ministry.findUnique({
         where: { id: id },
         include: {
@@ -49,6 +49,32 @@ export default async function MinistryPage({ params }: Props) {
             },
             members: {
                 where: { userId: session.user.id },
+            },
+            notices: {
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                            image: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+            },
+            schedules: {
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                            image: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    date: "asc",
+                },
             },
         },
     });
@@ -88,13 +114,16 @@ export default async function MinistryPage({ params }: Props) {
                     {/* 공지사항 섹션 */}
                     <div>
                         <h2 className="text-xl font-semibold mb-4">공지사항</h2>
-                        <MinistryNotices ministryId={ministry.id} />
+                        <MinistryNotices notices={ministry.notices} />
                     </div>
 
                     {/* 일정 섹션 */}
                     <div>
                         <h2 className="text-xl font-semibold mb-4">일정</h2>
-                        <MinistrySchedules ministryId={ministry.id} />
+                        <MinistrySchedules
+                            schedules={ministry.schedules}
+                            notices={ministry.notices}
+                        />
                     </div>
                 </div>
             </div>

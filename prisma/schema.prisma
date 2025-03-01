@@ -201,20 +201,45 @@ model ChurchNotice {
 
 // Ministry Notice (사역팀 내부 공지사항)
 model MinistryNotice {
-  id         String   @id @default(cuid())
-  ministryId String   @map("ministry_id")
-  userId     String   @map("user_id")
-  title      String
-  content    String   @db.Text
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  ministryId  String   @map("ministry_id")
+  userId      String   @map("user_id")
+  title       String
+  content     String   @db.Text
+  startDate   DateTime @map("start_date")  // 공지 시작일
+  endDate     DateTime @map("end_date")    // 공지 종료일
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 관계
+  ministry    Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      MinistryEvent[]
 
   @@index([ministryId])
   @@index([userId])
   @@map("ministry_notices")
+}
+
+// Ministry Event (사역팀 이벤트)
+model MinistryEvent {
+  id          String   @id @default(cuid())
+  noticeId    String   @map("notice_id")
+  title       String
+  description String?  @db.Text
+  location    String?
+  eventDate   DateTime @map("event_date")
+  startTime   DateTime @map("start_time")
+  endTime     DateTime @map("end_time")
+  maxAttendees Int?    @map("max_attendees")  // 최대 참석 인원 (선택)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // 관계
+  notice      MinistryNotice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@index([noticeId])
+  @@map("ministry_events")
 }
 
 // Ministry Announcement (사역팀 전체 광고)

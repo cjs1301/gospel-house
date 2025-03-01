@@ -42,12 +42,7 @@ export default async function OnboardingPage() {
                 </div>
                 <div className="mt-12">
                     <div className="bg-white shadow rounded-lg">
-                        <OnboardingForm
-                            churches={churches}
-                            userId={session.user.id}
-                            userEmail={session.user.email || ""}
-                            userName={session.user.name || ""}
-                        />
+                        <OnboardingForm churches={churches} userName={session.user.name || ""} />
                     </div>
                 </div>
             </div>

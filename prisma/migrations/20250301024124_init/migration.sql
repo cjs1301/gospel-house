@@ -1,49 +1,15 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Account` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Authenticator` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Session` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `VerificationToken` table. If the table is not empty, all the data it contains will be lost.
-
-*/
 -- CreateEnum
 CREATE TYPE "roles" AS ENUM ('admin', 'staff', 'member', 'pending');
-
--- DropForeignKey
-ALTER TABLE "Account" DROP CONSTRAINT "Account_userId_fkey";
-
--- DropForeignKey
-ALTER TABLE "Authenticator" DROP CONSTRAINT "Authenticator_userId_fkey";
-
--- DropForeignKey
-ALTER TABLE "Session" DROP CONSTRAINT "Session_userId_fkey";
-
--- DropTable
-DROP TABLE "Account";
-
--- DropTable
-DROP TABLE "Authenticator";
-
--- DropTable
-DROP TABLE "Session";
-
--- DropTable
-DROP TABLE "User";
-
--- DropTable
-DROP TABLE "VerificationToken";
 
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" TEXT,
-    "email" TEXT NOT NULL,
+    "email" TEXT,
     "email_verified" TIMESTAMP(3),
     "image" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -128,7 +94,7 @@ CREATE TABLE "ministries" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "churchId" TEXT NOT NULL,
+    "church_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -163,10 +129,10 @@ CREATE TABLE "church_notices" (
 -- CreateTable
 CREATE TABLE "ministry_notices" (
     "id" TEXT NOT NULL,
+    "ministry_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "is_important" BOOLEAN NOT NULL DEFAULT false,
-    "ministryId" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -184,6 +150,20 @@ CREATE TABLE "ministry_announcements" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ministry_announcements_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ministry_schedules" (
+    "id" TEXT NOT NULL,
+    "ministry_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "position" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ministry_schedules_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -234,9 +214,6 @@ CREATE TABLE "feed_comments" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
-
--- CreateIndex
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
 
 -- CreateIndex
@@ -247,6 +224,18 @@ CREATE UNIQUE INDEX "church_members_user_id_church_id_key" ON "church_members"("
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ministry_members_user_id_ministry_id_key" ON "ministry_members"("user_id", "ministry_id");
+
+-- CreateIndex
+CREATE INDEX "ministry_notices_ministry_id_idx" ON "ministry_notices"("ministry_id");
+
+-- CreateIndex
+CREATE INDEX "ministry_notices_user_id_idx" ON "ministry_notices"("user_id");
+
+-- CreateIndex
+CREATE INDEX "ministry_schedules_ministry_id_idx" ON "ministry_schedules"("ministry_id");
+
+-- CreateIndex
+CREATE INDEX "ministry_schedules_user_id_idx" ON "ministry_schedules"("user_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "feed_likes_feed_id_user_id_key" ON "feed_likes"("feed_id", "user_id");
@@ -267,7 +256,7 @@ ALTER TABLE "church_members" ADD CONSTRAINT "church_members_user_id_fkey" FOREIG
 ALTER TABLE "church_members" ADD CONSTRAINT "church_members_church_id_fkey" FOREIGN KEY ("church_id") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ministries" ADD CONSTRAINT "ministries_churchId_fkey" FOREIGN KEY ("churchId") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ministries" ADD CONSTRAINT "ministries_church_id_fkey" FOREIGN KEY ("church_id") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ministry_members" ADD CONSTRAINT "ministry_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -279,10 +268,19 @@ ALTER TABLE "ministry_members" ADD CONSTRAINT "ministry_members_ministry_id_fkey
 ALTER TABLE "church_notices" ADD CONSTRAINT "church_notices_church_id_fkey" FOREIGN KEY ("church_id") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ministry_notices" ADD CONSTRAINT "ministry_notices_ministryId_fkey" FOREIGN KEY ("ministryId") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ministry_notices" ADD CONSTRAINT "ministry_notices_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ministry_notices" ADD CONSTRAINT "ministry_notices_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ministry_announcements" ADD CONSTRAINT "ministry_announcements_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "church_feeds" ADD CONSTRAINT "church_feeds_church_id_fkey" FOREIGN KEY ("church_id") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;

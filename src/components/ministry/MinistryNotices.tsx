@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getMinistryNotices } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Card, CardHeader, CardBody } from "@heroui/card";
+import { User } from "@heroui/react";
+import { Divider } from "@heroui/divider";
 
 interface MinistryNotice {
     id: string;
     title: string;
     content: string;
+    eventDate: string | null;
+    startTime: string | null;
+    endTime: string | null;
     createdAt: string;
     user: {
         name: string | null;
@@ -17,62 +21,57 @@ interface MinistryNotice {
 }
 
 interface MinistryNoticesProps {
-    ministryId: string;
+    notices: MinistryNotice[];
 }
 
-export default function MinistryNotices({ ministryId }: MinistryNoticesProps) {
-    const [notices, setNotices] = useState<MinistryNotice[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchNotices() {
-            try {
-                const data = await getMinistryNotices(ministryId);
-                setNotices(data);
-            } catch (err) {
-                console.error(err);
-                setError("공지사항을 불러오는데 실패했습니다.");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchNotices();
-    }, [ministryId]);
-
-    if (isLoading) {
-        return <div className="p-4">로딩 중...</div>;
-    }
-
-    if (error) {
-        return <div className="p-4 text-red-500">{error}</div>;
-    }
-
+export default function MinistryNotices({ notices }: MinistryNoticesProps) {
     return (
         <div className="space-y-4">
             {notices.map((notice) => (
-                <div
-                    key={notice.id}
-                    className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-semibold">{notice.title}</h3>
-                        <span className="text-sm text-gray-500">
-                            {formatDistanceToNow(new Date(notice.createdAt), {
-                                addSuffix: true,
-                                locale: ko,
-                            })}
-                        </span>
-                    </div>
-                    <p className="text-gray-600 whitespace-pre-wrap">{notice.content}</p>
-                    <div className="mt-4 text-sm text-gray-500">
-                        작성자: {notice.user.name || "알 수 없음"}
-                    </div>
-                </div>
+                <Card key={notice.id} className="w-full">
+                    <CardHeader className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">{notice.title}</h3>
+                            <span className="text-sm text-default-500">
+                                {formatDistanceToNow(new Date(notice.createdAt), {
+                                    addSuffix: true,
+                                    locale: ko,
+                                })}
+                            </span>
+                        </div>
+                        <Divider className="my-2" />
+                    </CardHeader>
+                    <CardBody className="pt-2">
+                        <p className="text-default-600 whitespace-pre-wrap mb-4">
+                            {notice.content}
+                        </p>
+                        <div className="flex items-center justify-between mt-4">
+                            <User
+                                name={notice.user.name || "알 수 없음"}
+                                description="작성자"
+                                avatarProps={{
+                                    src: notice.user.image || undefined,
+                                    size: "sm",
+                                    radius: "full",
+                                }}
+                                classNames={{
+                                    base: "min-w-fit",
+                                    description: "text-tiny text-default-500",
+                                    name: "text-sm",
+                                }}
+                            />
+                        </div>
+                    </CardBody>
+                </Card>
             ))}
             {notices.length === 0 && (
-                <div className="text-center text-gray-500 py-8">등록된 공지사항이 없습니다.</div>
+                <Card>
+                    <CardBody>
+                        <div className="text-center text-default-500 py-8">
+                            등록된 공지사항이 없습니다.
+                        </div>
+                    </CardBody>
+                </Card>
             )}
         </div>
     );
