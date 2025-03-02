@@ -4,7 +4,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "./providers";
-
+import { Suspense } from "react";
+import Loading from "./loading";
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
@@ -68,7 +69,9 @@ export default async function RootLayout({
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <SessionProvider>
                     <Providers>
-                        <AppSidebar>{children}</AppSidebar>
+                        <Suspense fallback={<Loading />}>
+                            <AppSidebar>{children}</AppSidebar>
+                        </Suspense>
                     </Providers>
                 </SessionProvider>
             </body>

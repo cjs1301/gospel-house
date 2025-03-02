@@ -142,7 +142,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile - Bottom Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 bg-background border-t md:hidden">
+            <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-sm md:hidden z-100">
                 <nav className="flex items-center justify-around h-16 px-4">
                     {mobileNavigationItems.map((item) => {
                         const Icon = item.icon;
@@ -151,6 +151,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                prefetch={true}
                                 className={cn(
                                     "flex flex-col items-center justify-center w-16",
                                     isActive ? "text-primary" : "text-gray-500"
