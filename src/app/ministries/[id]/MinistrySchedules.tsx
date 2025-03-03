@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Calendar, DateValue } from "@heroui/calendar";
+import { Calendar } from "@heroui/calendar";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { User } from "@heroui/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
@@ -70,23 +70,6 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
         }
     };
 
-    // 특정 날짜에 일정이나 공지가 있는지 확인하는 함수
-    const hasScheduleOrNotice = (date: DateValue) => {
-        const formattedDate = format(date.toDate(getLocalTimeZone()), "yyyy-MM-dd");
-
-        const hasSchedule = schedules.some(
-            (schedule) => format(new Date(schedule.date), "yyyy-MM-dd") === formattedDate
-        );
-
-        const hasNotice = notices.some((notice) =>
-            notice.events.some(
-                (event) => format(new Date(event.eventDate), "yyyy-MM-dd") === formattedDate
-            )
-        );
-
-        return hasSchedule || hasNotice;
-    };
-
     // 선택된 날짜의 일정과 공지들
     const selectedDateSchedules = schedules.filter(
         (schedule) =>
@@ -101,34 +84,6 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                 format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd")
         )
     );
-    console.log(selectedDateNotices);
-    console.log(selectedDateSchedules);
-
-    // 일정이나 공지가 없는 날짜 배열 생성
-    const getUnavailableDates = () => {
-        const start = new Date();
-        const end = new Date();
-        end.setMonth(end.getMonth() + 3); // 3개월 범위
-
-        const dates = [];
-        const current = new Date(start);
-
-        while (current <= end) {
-            const date = today(getLocalTimeZone()).set({
-                year: current.getFullYear(),
-                month: current.getMonth() + 1,
-                day: current.getDate(),
-            });
-
-            if (!hasScheduleOrNotice(date)) {
-                dates.push(date);
-            }
-
-            current.setDate(current.getDate() + 1);
-        }
-
-        return dates;
-    };
 
     return (
         <div className="space-y-6">

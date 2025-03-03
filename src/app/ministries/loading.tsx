@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody, Avatar, ScrollShadow } from "@heroui/react";
+import { Card, CardHeader, CardBody, ScrollShadow } from "@heroui/react";
 import { Skeleton } from "@heroui/react";
 
 export default function MinistryLoading() {

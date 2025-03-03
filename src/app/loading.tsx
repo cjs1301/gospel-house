@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardHeader, CardBody, ScrollShadow, Skeleton } from "@heroui/react";
+import { Card, CardHeader, CardBody, Skeleton } from "@heroui/react";
 
 export default function HomeLoading() {
     // 임시 배열 생성 (4개의 스켈레톤 아이템을 표시)

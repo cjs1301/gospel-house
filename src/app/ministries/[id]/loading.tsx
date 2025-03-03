@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody, Button, Skeleton } from "@heroui/react";
+import { Card, CardHeader, CardBody, Skeleton } from "@heroui/react";
 
 export default function MinistryDetailLoading() {
     // 임시 배열 생성 (3개의 스켈레톤 아이템을 표시)
