@@ -50,19 +50,25 @@ export default function FeedList({ feeds, userId }: FeedListProps) {
     return (
         <>
             {/* 피드 섹션 */}
-            <div className="max-w-2xl mx-auto space-y-8">
+            <div className="max-w-2xl mx-auto space-y-8 pb-16 md:pb-0">
                 {feeds.map((feed) => (
-                    <Card key={feed.id} className="w-full">
-                        <CardHeader className="flex gap-3">
-                            <Avatar
-                                src={feed.author.image || undefined}
-                                name={feed.author.name || undefined}
-                                size="md"
-                                radius="full"
-                                color="default"
-                                isBordered
-                                showFallback
-                            />
+                    <Card key={feed.id} className="w-full relative z-0">
+                        <CardHeader className="flex gap-3 relative z-0">
+                            <div className="relative z-0">
+                                <Avatar
+                                    src={feed.author.image || undefined}
+                                    name={feed.author.name || undefined}
+                                    size="md"
+                                    radius="full"
+                                    color="default"
+                                    isBordered
+                                    showFallback
+                                    classNames={{
+                                        base: "!z-0",
+                                        fallback: "!z-0",
+                                    }}
+                                />
+                            </div>
                             <div className="flex flex-col">
                                 <p className="text-md font-semibold">{feed.author.name}</p>
                                 <p className="text-small text-default-500">
@@ -76,22 +82,18 @@ export default function FeedList({ feeds, userId }: FeedListProps) {
                         </CardHeader>
 
                         {feed.images[0] && (
-                            <HeroImage
-                                as={Image}
-                                src={feed.images[0].url}
-                                alt={`${feed.author.name}님의 피드 이미지`}
-                                width={0}
-                                height={0}
-                                sizes="(max-width: 768px) 100vw, 768px"
-                                className="w-full aspect-[4/3] object-cover rounded-none"
-                                style={{ height: "auto" }}
-                                isZoomed
-                                classNames={{
-                                    wrapper: "w-full aspect-[4/3] rounded-none overflow-hidden",
-                                    zoomedWrapper: "!w-full !h-full rounded-none",
-                                }}
-                                fallbackSrc="/placeholder-image.jpg"
-                            />
+                            <div className="relative overflow-hidden">
+                                <Image
+                                    src={feed.images[0].url}
+                                    alt={`${feed.author.name}님의 피드 이미지`}
+                                    width={0}
+                                    height={0}
+                                    sizes="(max-width: 768px) 100vw, 768px"
+                                    className="w-full aspect-[4/3] object-cover hover:scale-105 transition-transform duration-300"
+                                    style={{ height: "auto" }}
+                                    priority={true}
+                                />
+                            </div>
                         )}
 
                         <CardBody className="px-4 py-3">

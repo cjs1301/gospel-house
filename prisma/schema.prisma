@@ -102,6 +102,10 @@ model Church {
   name        String
   address     String?
   description String?
+  image       String?    // Add church image URL
+  instagram   String?    // Add instagram URL
+  youtube     String?    // Add youtube URL
+  homepage    String?    // Add homepage URL
   
   // Relationships
   members     ChurchMember[]

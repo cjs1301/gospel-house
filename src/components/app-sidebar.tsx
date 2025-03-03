@@ -43,9 +43,22 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     ];
 
     // 모바일용 네비게이션 아이템 (알림 제외)
-    const mobileNavigationItems = desktopNavigationItems.filter(
-        (item) => item.href !== "/notifications"
-    );
+    const mobileNavigationItems = [
+        { href: "/", label: "홈", icon: HomeIcon },
+        { href: "/ministries", label: "사역팀", icon: UserGroupIcon },
+        { href: "/announcements", label: "공지사항", icon: DocumentTextIcon },
+        {
+            href: "/profile",
+            label: "내 정보",
+            icon: ({ className }: { className?: string }) => (
+                <Avatar
+                    src={session?.user?.image || ""}
+                    alt={session?.user?.name || ""}
+                    className={cn("h-6 w-6", className)}
+                />
+            ),
+        },
+    ];
 
     if (isLoginPage) {
         return children;

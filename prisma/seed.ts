@@ -13,12 +13,20 @@ async function main() {
                 name: "정동젊은이교회",
                 address: "서울특별시 중구 정동길 26",
                 description: "정동제일교회 젊은이교회",
+                image: "/churches/jdyouth.png",
+                instagram: "https://www.instagram.com/jdyouth",
+                youtube: "https://www.youtube.com/@jdyouth",
+                homepage: "https://www.jdyouth.org",
             },
             create: {
                 id: "jdyouth",
                 name: "정동젊은이교회",
                 address: "서울특별시 중구 정동길 26",
                 description: "정동제일교회 젊은이교회",
+                image: "/churches/jdyouth.png",
+                instagram: "https://www.instagram.com/jdyouth",
+                youtube: "https://www.youtube.com/@jdyouth",
+                homepage: "https://www.jdyouth.org",
             },
         });
 
