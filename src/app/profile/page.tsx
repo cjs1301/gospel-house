@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Card, CardHeader, CardBody, Button, Divider, User, Tabs, Tab } from "@heroui/react";
+import { Card, CardBody, Button, Divider, User, Tabs, Tab } from "@heroui/react";
 import { PencilIcon, BellIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 
 export default function ProfilePage() {

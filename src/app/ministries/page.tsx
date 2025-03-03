@@ -3,7 +3,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/prisma";
 import { Card, CardHeader, CardBody, Avatar, ScrollShadow } from "@heroui/react";
 import { UserGroupIcon, CalendarIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 
 export default async function MinistriesPage() {
     const session = await auth();

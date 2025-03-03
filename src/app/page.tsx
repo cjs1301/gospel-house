@@ -4,7 +4,7 @@ import { prisma } from "@/prisma";
 import FeedList from "@/components/FeedList";
 import Link from "next/link";
 import { GlobeAltIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
-import { Card, CardBody, Avatar, Divider } from "@heroui/react";
+import { Card, CardBody, Avatar } from "@heroui/react";
 
 export default async function Home() {
     const session = await auth();
