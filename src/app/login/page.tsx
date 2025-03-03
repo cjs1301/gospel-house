@@ -27,9 +27,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
                 <div className="space-y-1 mb-6">
                     <h2 className="text-2xl font-semibold text-center">Gospel House 로그인</h2>
-                    <p className="text-gray-500 text-center">
-                        교회 커뮤니티 플랫폼에 오신 것을 환영합니다
-                    </p>
+                    <p className="text-gray-500 text-center">교회 공동체를 위한 플랫폼</p>
                 </div>
                 <div className="space-y-4">
                     <Button
