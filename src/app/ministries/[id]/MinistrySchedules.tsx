@@ -71,7 +71,7 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
     };
 
     // 특정 날짜에 일정이나 공지가 있는지 확인하는 함수
-    const isDateUnavailable = (date: DateValue) => {
+    const hasScheduleOrNotice = (date: DateValue) => {
         const formattedDate = format(date.toDate(getLocalTimeZone()), "yyyy-MM-dd");
 
         const hasSchedule = schedules.some(
@@ -104,6 +104,32 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
     console.log(selectedDateNotices);
     console.log(selectedDateSchedules);
 
+    // 일정이나 공지가 없는 날짜 배열 생성
+    const getUnavailableDates = () => {
+        const start = new Date();
+        const end = new Date();
+        end.setMonth(end.getMonth() + 3); // 3개월 범위
+
+        const dates = [];
+        const current = new Date(start);
+
+        while (current <= end) {
+            const date = today(getLocalTimeZone()).set({
+                year: current.getFullYear(),
+                month: current.getMonth() + 1,
+                day: current.getDate(),
+            });
+
+            if (!hasScheduleOrNotice(date)) {
+                dates.push(date);
+            }
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        return dates;
+    };
+
     return (
         <div className="space-y-6">
             <Card className="w-full">
@@ -111,8 +137,9 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                     <Calendar
                         value={selectedDate}
                         onChange={setSelectedDate}
-                        isDateUnavailable={isDateUnavailable}
                         calendarWidth={300}
+                        minValue={today(getLocalTimeZone())}
+                        // className="[&_button]:transition-colors [&_button]:duration-200 [&_button.selected]:bg-primary-500 [&_button.selected]:text-white"
                     />
                 </CardBody>
             </Card>

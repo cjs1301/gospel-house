@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/prisma";
 import { Card, CardHeader, CardBody, Avatar, ScrollShadow } from "@heroui/react";
 import { UserGroupIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 export default async function MinistriesPage() {
     const session = await auth();
@@ -46,9 +47,10 @@ export default async function MinistriesPage() {
                     className="flex gap-4 p-4 overflow-x-auto hide-scrollbar"
                 >
                     {ministries.map((ministry) => (
-                        <div
+                        <Link
                             key={ministry.id}
-                            className="flex flex-col items-center gap-1 min-w-[64px]"
+                            href={`/ministries/${ministry.id}`}
+                            className="flex flex-col items-center gap-1 min-w-[64px] hover:opacity-80 transition-opacity"
                         >
                             <Avatar
                                 name={ministry.name}
@@ -61,7 +63,7 @@ export default async function MinistriesPage() {
                             <span className="text-[10px] text-default-500">
                                 {ministry._count.members}명
                             </span>
-                        </div>
+                        </Link>
                     ))}
                 </ScrollShadow>
             </div>
@@ -70,65 +72,78 @@ export default async function MinistriesPage() {
             <main className="container max-w-2xl mx-auto px-4 pt-36 md:pt-28">
                 <div className="space-y-6">
                     {ministries.map((ministry) => (
-                        <Card key={ministry.id} className="w-full">
-                            <CardHeader className="flex gap-3">
-                                <Avatar name={ministry.name} size="md" isBordered color="primary" />
-                                <div className="flex flex-col">
-                                    <p className="text-md font-semibold">{ministry.name}</p>
-                                    <p className="text-small text-default-500">
-                                        팀원 {ministry._count.members}명
+                        <Link
+                            key={ministry.id}
+                            href={`/ministries/${ministry.id}`}
+                            className="block hover:opacity-95 transition-opacity"
+                        >
+                            <Card className="w-full">
+                                <CardHeader className="flex gap-3">
+                                    <Avatar
+                                        name={ministry.name}
+                                        size="md"
+                                        isBordered
+                                        color="primary"
+                                    />
+                                    <div className="flex flex-col">
+                                        <p className="text-md font-semibold">{ministry.name}</p>
+                                        <p className="text-small text-default-500">
+                                            팀원 {ministry._count.members}명
+                                        </p>
+                                    </div>
+                                </CardHeader>
+
+                                <CardBody className="px-4 py-3">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <UserGroupIcon className="w-5 h-5 text-primary" />
+                                        <h2 className="text-lg font-semibold">사역팀 소개</h2>
+                                    </div>
+                                    <p className="text-gray-600 mb-6">
+                                        {ministry.description || "사역팀 소개가 없습니다."}
                                     </p>
-                                </div>
-                            </CardHeader>
 
-                            <CardBody className="px-4 py-3">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <UserGroupIcon className="w-5 h-5 text-primary" />
-                                    <h2 className="text-lg font-semibold">사역팀 소개</h2>
-                                </div>
-                                <p className="text-gray-600 mb-6">
-                                    {ministry.description || "사역팀 소개가 없습니다."}
-                                </p>
-
-                                {ministry.notices.length > 0 && (
-                                    <>
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <CalendarIcon className="w-5 h-5 text-primary" />
-                                            <h2 className="text-lg font-semibold">최근 공지사항</h2>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {ministry.notices.map((notice) => (
-                                                <div
-                                                    key={notice.id}
-                                                    className="p-3 rounded-lg bg-default-50"
-                                                >
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <Avatar
-                                                            name={notice.user.name || ""}
-                                                            size="sm"
-                                                        />
-                                                        <span className="text-sm font-medium">
-                                                            {notice.user.name}
-                                                        </span>
-                                                        <span className="text-xs text-default-500">
-                                                            {new Date(
-                                                                notice.createdAt
-                                                            ).toLocaleDateString("ko-KR")}
-                                                        </span>
+                                    {ministry.notices.length > 0 && (
+                                        <>
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <CalendarIcon className="w-5 h-5 text-primary" />
+                                                <h2 className="text-lg font-semibold">
+                                                    최근 공지사항
+                                                </h2>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {ministry.notices.map((notice) => (
+                                                    <div
+                                                        key={notice.id}
+                                                        className="p-3 rounded-lg bg-default-50"
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <Avatar
+                                                                name={notice.user.name || ""}
+                                                                size="sm"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                {notice.user.name}
+                                                            </span>
+                                                            <span className="text-xs text-default-500">
+                                                                {new Date(
+                                                                    notice.createdAt
+                                                                ).toLocaleDateString("ko-KR")}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="font-medium mb-1">
+                                                            {notice.title}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                                            {notice.content}
+                                                        </p>
                                                     </div>
-                                                    <h3 className="font-medium mb-1">
-                                                        {notice.title}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600 line-clamp-2">
-                                                        {notice.content}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </CardBody>
-                        </Card>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </CardBody>
+                            </Card>
+                        </Link>
                     ))}
                 </div>
             </main>
