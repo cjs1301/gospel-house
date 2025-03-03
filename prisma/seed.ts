@@ -14,9 +14,10 @@ async function main() {
                 address: "서울특별시 중구 정동길 26",
                 description: "정동제일교회 젊은이교회",
                 image: "/churches/jdyouth.png",
-                instagram: "https://www.instagram.com/jdyouth",
-                youtube: "https://www.youtube.com/@jdyouth",
-                homepage: "https://www.jdyouth.org",
+                instagram:
+                    "https://www.instagram.com/chungdong_gospel_house?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+                youtube: "https://www.youtube.com/@gospelhouse2612",
+                homepage: "http://chungdong.org/html/main.asp",
             },
             create: {
                 id: "jdyouth",
@@ -24,9 +25,10 @@ async function main() {
                 address: "서울특별시 중구 정동길 26",
                 description: "정동제일교회 젊은이교회",
                 image: "/churches/jdyouth.png",
-                instagram: "https://www.instagram.com/jdyouth",
-                youtube: "https://www.youtube.com/@jdyouth",
-                homepage: "https://www.jdyouth.org",
+                instagram:
+                    "https://www.instagram.com/chungdong_gospel_house?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+                youtube: "https://www.youtube.com/@gospelhouse2612",
+                homepage: "http://chungdong.org/html/main.asp",
             },
         });
 

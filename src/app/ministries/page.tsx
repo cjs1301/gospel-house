@@ -78,12 +78,16 @@ export default async function MinistriesPage() {
                             className="block hover:opacity-95 transition-opacity"
                         >
                             <Card className="w-full">
-                                <CardHeader className="flex gap-3">
+                                <CardHeader className="flex gap-3 z-0">
                                     <Avatar
                                         name={ministry.name}
                                         size="md"
                                         isBordered
                                         color="primary"
+                                        classNames={{
+                                            base: "!z-0",
+                                            fallback: "!z-0",
+                                        }}
                                     />
                                     <div className="flex flex-col">
                                         <p className="text-md font-semibold">{ministry.name}</p>

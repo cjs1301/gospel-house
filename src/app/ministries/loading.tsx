@@ -28,7 +28,7 @@ export default function MinistryLoading() {
                 <div className="space-y-6">
                     {skeletonItems.map((_, index) => (
                         <Card key={index} className="w-full">
-                            <CardHeader className="flex gap-3">
+                            <CardHeader className="flex gap-3 z-0">
                                 <Skeleton className="w-12 h-12 rounded-full" />
                                 <div className="flex flex-col gap-2">
                                     <Skeleton className="h-4 w-32 rounded-lg" />
