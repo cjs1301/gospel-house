@@ -138,7 +138,7 @@ export default function AnnouncementsPage() {
                 <div className="space-y-4">
                     {filteredAnnouncements.map((announcement) => (
                         <Card key={announcement.id} className="w-full">
-                            <CardHeader className="flex gap-3">
+                            <CardHeader className="flex gap-3 z-0">
                                 <Avatar
                                     src={announcement.author.image}
                                     name={announcement.author.name}

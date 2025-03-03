@@ -26,7 +26,7 @@ export default function MinistryNotices({ notices }: MinistryNoticesProps) {
         <div className="space-y-4">
             {notices.map((notice) => (
                 <Card key={notice.id} className="w-full">
-                    <CardHeader className="flex flex-col gap-2">
+                    <CardHeader className="flex flex-col gap-2 z-0">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-semibold">{notice.title}</h3>
                             <span className="text-sm text-default-500">
