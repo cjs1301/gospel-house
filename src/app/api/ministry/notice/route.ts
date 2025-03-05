@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
             where: {
                 userId: session.user.id,
                 ministryId,
-                role: "LEADER",
+                role: "ADMIN",
             },
         });
 

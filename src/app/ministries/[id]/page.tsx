@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/prisma";
-import MinistryNotices from "@/app/ministries/[id]/MinistryNotices";
-import MinistrySchedules from "@/app/ministries/[id]/MinistrySchedules";
+import MinistryNotices from "@/components/ministry/MinistryNotices";
+import MinistrySchedules from "@/components/ministry/MinistrySchedules";
 import { Button } from "@heroui/react";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +50,7 @@ export default async function MinistryPage({ params }: Props) {
             members: {
                 where: { userId: session.user.id },
             },
+            positions: true,
             notices: {
                 include: {
                     user: {
@@ -72,6 +73,7 @@ export default async function MinistryPage({ params }: Props) {
                             image: true,
                         },
                     },
+                    position: true,
                 },
                 orderBy: {
                     date: "asc",
@@ -101,6 +103,7 @@ export default async function MinistryPage({ params }: Props) {
             ...schedule,
             date: schedule.date.toISOString(),
         })),
+        positions: ministry.positions,
     };
 
     const isMember = ministry.members.length > 0;
@@ -143,6 +146,8 @@ export default async function MinistryPage({ params }: Props) {
                         <MinistrySchedules
                             schedules={serializedMinistry.schedules}
                             notices={serializedMinistry.notices}
+                            positions={serializedMinistry.positions}
+                            userMinistries={[ministry.id]}
                         />
                     </div>
                 </div>

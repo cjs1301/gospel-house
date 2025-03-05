@@ -1,18 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import {
-    Card,
-    CardHeader,
-    CardBody,
-    CardFooter,
-    Button,
-    Avatar,
-    Chip,
-    ScrollShadow,
-} from "@heroui/react";
+import { Card, CardHeader, CardBody, CardFooter, Button, Avatar, Chip } from "@heroui/react";
 import { PlusIcon, CalendarIcon, MegaphoneIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { AnnouncementLayout } from "@/components/layouts/AnnouncementLayout";
 
 type Category = "전체" | "모집" | "예배" | "셀모임" | "행사" | "기타";
 
@@ -103,107 +95,89 @@ export default function AnnouncementsPage() {
             ? announcements
             : announcements.filter((a) => a.category === selectedCategory);
 
-    return (
-        <div className="min-h-screen bg-background pb-16 md:pb-0">
-            {/* 카테고리 필터 */}
-            <div className="fixed top-16 left-0 right-0 bg-background/95 backdrop-blur-sm z-40 md:top-0">
-                <ScrollShadow
-                    orientation="horizontal"
-                    className="flex gap-2 p-4 overflow-x-auto hide-scrollbar"
-                >
-                    {categories.map((category) => (
-                        <Chip
-                            key={category}
-                            variant={selectedCategory === category ? "solid" : "flat"}
-                            color="primary"
-                            className="cursor-pointer"
-                            onClick={() => setSelectedCategory(category)}
-                        >
-                            {category}
-                        </Chip>
-                    ))}
-                </ScrollShadow>
-            </div>
+    const headerContent = categories.map((category) => (
+        <Chip
+            key={category}
+            variant={selectedCategory === category ? "solid" : "flat"}
+            color="primary"
+            className="cursor-pointer"
+            onClick={() => setSelectedCategory(category)}
+        >
+            {category}
+        </Chip>
+    ));
 
-            {/* 공지사항 피드 */}
-            <main className="container max-w-2xl mx-auto px-4 pt-36 md:pt-28">
-                {isAdmin && (
-                    <div className="mb-6">
-                        <Button color="primary" startContent={<PlusIcon className="w-4 h-4" />}>
-                            공지사항 작성
-                        </Button>
-                    </div>
-                )}
-
-                <div className="space-y-4">
-                    {filteredAnnouncements.map((announcement) => (
-                        <Card key={announcement.id} className="w-full">
-                            <CardHeader className="flex gap-3 z-0">
-                                <Avatar
-                                    src={announcement.author.image}
-                                    name={announcement.author.name}
-                                    size="md"
-                                    isBordered
-                                />
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-md font-semibold">
-                                            {announcement.author.name}
-                                        </p>
-                                        <Chip
-                                            size="sm"
-                                            variant="flat"
-                                            color={
-                                                announcement.status === "진행중"
-                                                    ? "primary"
-                                                    : announcement.status === "예정"
-                                                    ? "warning"
-                                                    : "default"
-                                            }
-                                        >
-                                            {announcement.status}
-                                        </Chip>
-                                    </div>
-                                    <p className="text-small text-default-500">
-                                        {new Date(announcement.createdAt).toLocaleDateString(
-                                            "ko-KR",
-                                            {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            }
-                                        )}
-                                    </p>
-                                </div>
-                            </CardHeader>
-
-                            <CardBody className="px-4 py-3">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <MegaphoneIcon className="w-5 h-5 text-primary" />
-                                    <h2 className="text-lg font-semibold">{announcement.title}</h2>
-                                </div>
-                                <p className="text-gray-600 whitespace-pre-line">
-                                    {announcement.content}
-                                </p>
-                            </CardBody>
-
-                            <CardFooter className="px-4 pt-2 pb-4">
-                                <div className="flex items-center gap-2">
-                                    <Chip size="sm" variant="flat" color="primary">
-                                        {announcement.category}
-                                    </Chip>
-                                    {announcement.status !== "완료" && (
-                                        <div className="flex items-center gap-2 text-default-500 ml-2">
-                                            <CalendarIcon className="w-4 h-4" />
-                                            <span className="text-sm">일정 보기</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardFooter>
-                        </Card>
-                    ))}
+    const mainContent = (
+        <>
+            {isAdmin && (
+                <div className="mb-6">
+                    <Button color="primary" startContent={<PlusIcon className="w-4 h-4" />}>
+                        공지사항 작성
+                    </Button>
                 </div>
-            </main>
-        </div>
+            )}
+
+            {filteredAnnouncements.map((announcement) => (
+                <Card key={announcement.id} className="w-full">
+                    <CardHeader className="flex gap-3 z-0">
+                        <Avatar
+                            src={announcement.author.image}
+                            name={announcement.author.name}
+                            size="md"
+                            isBordered
+                        />
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                                <p className="text-md font-semibold">{announcement.author.name}</p>
+                                <Chip
+                                    size="sm"
+                                    variant="flat"
+                                    color={
+                                        announcement.status === "진행중"
+                                            ? "primary"
+                                            : announcement.status === "예정"
+                                            ? "warning"
+                                            : "default"
+                                    }
+                                >
+                                    {announcement.status}
+                                </Chip>
+                            </div>
+                            <p className="text-small text-default-500">
+                                {new Date(announcement.createdAt).toLocaleDateString("ko-KR", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                })}
+                            </p>
+                        </div>
+                    </CardHeader>
+
+                    <CardBody className="px-4 py-3">
+                        <div className="flex items-center gap-2 mb-3">
+                            <MegaphoneIcon className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-semibold">{announcement.title}</h2>
+                        </div>
+                        <p className="text-gray-600 whitespace-pre-line">{announcement.content}</p>
+                    </CardBody>
+
+                    <CardFooter className="px-4 pt-2 pb-4">
+                        <div className="flex items-center gap-2">
+                            <Chip size="sm" variant="flat" color="primary">
+                                {announcement.category}
+                            </Chip>
+                            {announcement.status !== "완료" && (
+                                <div className="flex items-center gap-2 text-default-500 ml-2">
+                                    <CalendarIcon className="w-4 h-4" />
+                                    <span className="text-sm">일정 보기</span>
+                                </div>
+                            )}
+                        </div>
+                    </CardFooter>
+                </Card>
+            ))}
+        </>
     );
+
+    return <AnnouncementLayout headerContent={headerContent}>{mainContent}</AnnouncementLayout>;
 }

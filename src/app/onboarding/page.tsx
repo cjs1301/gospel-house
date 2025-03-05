@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/prisma";
-import OnboardingForm from "./OnboardingForm";
+import OnboardingForm from "../../components/onboarding/OnboardingForm";
 
 export default async function OnboardingPage() {
     const session = await auth();

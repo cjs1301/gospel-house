@@ -8,6 +8,7 @@ import { User } from "@heroui/react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Chip } from "@heroui/chip";
 import { useState } from "react";
+import { ScheduleApplication } from "./ScheduleApplication";
 
 interface MinistryEvent {
     id: string;
@@ -28,10 +29,18 @@ interface MinistryNotice {
     };
 }
 
+interface MinistryPosition {
+    id: string;
+    name: string;
+    description: string | null;
+    maxMembers: number | null;
+    ministryId: string;
+}
+
 interface MinistrySchedule {
     id: string;
     date: string;
-    position: string;
+    position: MinistryPosition;
     status: string;
     user: {
         name: string | null;
@@ -42,12 +51,18 @@ interface MinistrySchedule {
 interface MinistrySchedulesProps {
     schedules: MinistrySchedule[];
     notices: MinistryNotice[];
+    positions: MinistryPosition[];
+    userMinistries: string[];
 }
 
-export default function MinistrySchedules({ schedules, notices }: MinistrySchedulesProps) {
+export default function MinistrySchedules({
+    schedules,
+    notices,
+    positions,
+    userMinistries,
+}: MinistrySchedulesProps) {
     const [selectedDate, setSelectedDate] = useState(today(getLocalTimeZone()));
-    console.log(schedules);
-    console.log(notices);
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case "APPROVED":
@@ -84,6 +99,12 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                 format(selectedDate.toDate(getLocalTimeZone()), "yyyy-MM-dd")
         )
     );
+    // 선택된 날짜가 일요일인지 확인
+    const isSunday = selectedDate.toDate(getLocalTimeZone()).getDay() === 0;
+
+    // 사용자가 해당 사역팀에 속해있는지 확인
+    const ministryId = userMinistries[0];
+    const isUserMember = userMinistries.includes(ministryId);
 
     return (
         <div className="space-y-6">
@@ -98,6 +119,14 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                     />
                 </CardBody>
             </Card>
+            {/* 일요일이고 사용자가 사역팀 멤버일 때만 신청 컴포넌트 표시 */}
+            {isSunday && isUserMember && (
+                <ScheduleApplication
+                    ministryId={ministryId}
+                    positions={positions}
+                    selectedDate={selectedDate.toDate(getLocalTimeZone())}
+                />
+            )}
 
             {/* 선택된 날짜의 일정과 공지 목록 */}
             <div className="space-y-4">
@@ -176,29 +205,38 @@ export default function MinistrySchedules({ schedules, notices }: MinistrySchedu
                                             <Chip color="primary" variant="flat" size="sm">
                                                 일정
                                             </Chip>
-                                            <p className="text-gray-600">{schedule.position}</p>
+                                            <div>
+                                                <h4 className="font-medium">
+                                                    {schedule.position.name}
+                                                </h4>
+                                                {schedule.position.maxMembers !== null && (
+                                                    <p className="text-sm text-gray-600">
+                                                        최대 {schedule.position.maxMembers}명
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <span
+                                                className={`text-sm font-medium ${getStatusColor(
+                                                    schedule.status
+                                                )}`}
+                                            >
+                                                {getStatusText(schedule.status)}
+                                            </span>
                                         </div>
-                                        <span
-                                            className={`text-sm font-medium ${getStatusColor(
-                                                schedule.status
-                                            )}`}
-                                        >
-                                            {getStatusText(schedule.status)}
-                                        </span>
-                                    </div>
-                                    <div className="mt-2">
-                                        <User
-                                            name={schedule.user.name || "알 수 없음"}
-                                            avatarProps={{
-                                                src: schedule.user.image || undefined,
-                                                size: "sm",
-                                                radius: "full",
-                                            }}
-                                            classNames={{
-                                                base: "min-w-fit",
-                                                name: "text-sm",
-                                            }}
-                                        />
+                                        <div className="mt-2">
+                                            <User
+                                                name={schedule.user.name || "알 수 없음"}
+                                                avatarProps={{
+                                                    src: schedule.user.image || undefined,
+                                                    size: "sm",
+                                                    radius: "full",
+                                                }}
+                                                classNames={{
+                                                    base: "min-w-fit",
+                                                    name: "text-sm",
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </CardBody>
                             </Card>

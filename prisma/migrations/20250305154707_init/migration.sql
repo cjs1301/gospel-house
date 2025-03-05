@@ -1,5 +1,11 @@
 -- CreateEnum
-CREATE TYPE "roles" AS ENUM ('admin', 'staff', 'member', 'pending');
+CREATE TYPE "church_roles" AS ENUM ('admin', 'member', 'pending');
+
+-- CreateEnum
+CREATE TYPE "roles" AS ENUM ('super_admin', 'user');
+
+-- CreateEnum
+CREATE TYPE "ministry_roles" AS ENUM ('admin', 'member', 'pending');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -8,6 +14,7 @@ CREATE TABLE "users" (
     "email" TEXT,
     "email_verified" TIMESTAMP(3),
     "image" TEXT,
+    "role" "roles" NOT NULL DEFAULT 'user',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -71,6 +78,10 @@ CREATE TABLE "churches" (
     "name" TEXT NOT NULL,
     "address" TEXT,
     "description" TEXT,
+    "image" TEXT,
+    "instagram" TEXT,
+    "youtube" TEXT,
+    "homepage" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -80,7 +91,7 @@ CREATE TABLE "churches" (
 -- CreateTable
 CREATE TABLE "church_members" (
     "id" TEXT NOT NULL,
-    "role" "roles" NOT NULL DEFAULT 'member',
+    "role" "church_roles" NOT NULL DEFAULT 'member',
     "user_id" TEXT NOT NULL,
     "church_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -104,7 +115,7 @@ CREATE TABLE "ministries" (
 -- CreateTable
 CREATE TABLE "ministry_members" (
     "id" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
+    "role" "ministry_roles" NOT NULL DEFAULT 'pending',
     "user_id" TEXT NOT NULL,
     "ministry_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -133,10 +144,29 @@ CREATE TABLE "ministry_notices" (
     "user_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "start_date" TIMESTAMP(3) NOT NULL,
+    "end_date" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ministry_notices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ministry_events" (
+    "id" TEXT NOT NULL,
+    "notice_id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "location" TEXT,
+    "event_date" TIMESTAMP(3) NOT NULL,
+    "start_time" TIMESTAMP(3) NOT NULL,
+    "end_time" TIMESTAMP(3) NOT NULL,
+    "max_attendees" INTEGER,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ministry_events_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -156,12 +186,10 @@ CREATE TABLE "ministry_announcements" (
 CREATE TABLE "ministry_schedules" (
     "id" TEXT NOT NULL,
     "ministry_id" TEXT NOT NULL,
+    "position_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "position" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ministry_schedules_pkey" PRIMARY KEY ("id")
 );
@@ -213,6 +241,17 @@ CREATE TABLE "feed_comments" (
     CONSTRAINT "feed_comments_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ministry_positions" (
+    "id" TEXT NOT NULL,
+    "ministry_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "maxMembers" INTEGER,
+
+    CONSTRAINT "ministry_positions_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
 
@@ -232,10 +271,7 @@ CREATE INDEX "ministry_notices_ministry_id_idx" ON "ministry_notices"("ministry_
 CREATE INDEX "ministry_notices_user_id_idx" ON "ministry_notices"("user_id");
 
 -- CreateIndex
-CREATE INDEX "ministry_schedules_ministry_id_idx" ON "ministry_schedules"("ministry_id");
-
--- CreateIndex
-CREATE INDEX "ministry_schedules_user_id_idx" ON "ministry_schedules"("user_id");
+CREATE INDEX "ministry_events_notice_id_idx" ON "ministry_events"("notice_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "feed_likes_feed_id_user_id_key" ON "feed_likes"("feed_id", "user_id");
@@ -274,13 +310,19 @@ ALTER TABLE "ministry_notices" ADD CONSTRAINT "ministry_notices_ministry_id_fkey
 ALTER TABLE "ministry_notices" ADD CONSTRAINT "ministry_notices_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "ministry_events" ADD CONSTRAINT "ministry_events_notice_id_fkey" FOREIGN KEY ("notice_id") REFERENCES "ministry_notices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ministry_announcements" ADD CONSTRAINT "ministry_announcements_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_position_id_fkey" FOREIGN KEY ("position_id") REFERENCES "ministry_positions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ministry_schedules" ADD CONSTRAINT "ministry_schedules_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "church_feeds" ADD CONSTRAINT "church_feeds_church_id_fkey" FOREIGN KEY ("church_id") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -302,3 +344,6 @@ ALTER TABLE "feed_comments" ADD CONSTRAINT "feed_comments_feed_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "feed_comments" ADD CONSTRAINT "feed_comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ministry_positions" ADD CONSTRAINT "ministry_positions_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;

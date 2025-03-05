@@ -14,6 +14,7 @@ model User {
   email         String?         @map("email")
   emailVerified DateTime?       @map("email_verified")
   image         String?
+  role          Role     @default(USER)  // Add service-level role
   accounts      Account[]
   sessions      Session[]
   // Optional for WebAuthn support
@@ -122,7 +123,7 @@ model Church {
 // ChurchMember Model (교회 멤버 및 권한)
 model ChurchMember {
   id        String   @id @default(cuid())
-  role      Role     @default(MEMBER)
+  role      ChurchRole     @default(MEMBER)
   
   // Relationships
   userId    String   @map("user_id")
@@ -137,14 +138,7 @@ model ChurchMember {
   @@map("church_members")
 }
 
-enum Role {
-  ADMIN     @map("admin")      // 교회 관리자
-  STAFF     @map("staff")      // 교회 스태프
-  MEMBER    @map("member")     // 일반 멤버
-  PENDING   @map("pending")    // 승인 대기 중
 
-  @@map("roles")
-}
 
 // Ministry Model (사역팀)
 model Ministry {
@@ -161,17 +155,42 @@ model Ministry {
   notices     MinistryNotice[]
   schedules   MinistrySchedule[]
   announcements MinistryAnnouncement[]
+  positions   MinistryPosition[] 
 
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
   @@map("ministries")
 }
+enum ChurchRole {
+  ADMIN     @map("admin")      // 교회 관리자
+  MEMBER    @map("member")     // 일반 멤버
+  PENDING   @map("pending")    // 승인 대기 중
+
+  @@map("church_roles")
+}
+
+// Service level role enum
+enum Role {
+  SUPER_ADMIN  @map("super_admin")  // 서비스 전체 관리자
+  USER         @map("user")         // 일반 사용자
+
+  @@map("roles")
+}
+
+// Ministry Member Role enum
+enum MinistryRole {
+  ADMIN     @map("admin")      // 사역팀 관리자
+  MEMBER    @map("member")     // 일반 멤버
+  PENDING   @map("pending")    // 승인 대기 중
+
+  @@map("ministry_roles")
+}
 
 // Ministry Member (사역팀 멤버)
 model MinistryMember {
-  id          String   @id @default(cuid())
-  role        String   // 팀장, 팀원 등의 역할
+  id          String       @id @default(cuid())
+  role        MinistryRole @default(PENDING)  // Change role to use enum
   
   // Relationships
   userId      String   @map("user_id")
@@ -265,20 +284,17 @@ model MinistryAnnouncement {
 
 // Ministry Schedule (사역팀 일정)
 model MinistrySchedule {
-  id         String   @id @default(cuid())
-  ministryId String @map("ministry_id")
-  userId     String @map("user_id")
-  date       DateTime
-  position   String
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  ministryId  String   @map("ministry_id")
+  positionId  String   @map("position_id")
+  userId      String   @map("user_id")
+  date        DateTime
+  status      String   @default("PENDING")
+  
+  ministry    Ministry         @relation(fields: [ministryId], references: [id])
+  position    MinistryPosition @relation(fields: [positionId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
 
-  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([ministryId])
-  @@index([userId])
   @@map("ministry_schedules")
 }
 
@@ -352,4 +368,17 @@ model FeedComment {
   updatedAt DateTime   @updatedAt @map("updated_at")
 
   @@map("feed_comments")
+}
+
+model MinistryPosition {
+  id          String   @id @default(cuid())
+  ministryId  String   @map("ministry_id")
+  name        String   // 포지션 이름 (드럼, 베이스 등)
+  description String?  // 포지션 설명
+  maxMembers  Int?     // 최대 인원 수 (null이면 제한 없음)
+  
+  ministry    Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  schedules   MinistrySchedule[]
+
+  @@map("ministry_positions")
 }
