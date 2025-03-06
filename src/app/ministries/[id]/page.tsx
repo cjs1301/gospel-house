@@ -4,6 +4,7 @@ import { prisma } from "@/prisma";
 import MinistryNotices from "@/components/ministry/MinistryNotices";
 import MinistrySchedules from "@/components/ministry/MinistrySchedules";
 import { Button } from "@heroui/react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,10 @@ export default async function MinistryPage({ params }: Props) {
 
     const isMember = ministry.members.length > 0;
 
+    const isLeader = ministry.members.some(
+        (member) => member.userId === session?.user.id && member.role === "ADMIN"
+    );
+
     return (
         <div className="min-h-screen bg-background">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -116,6 +121,11 @@ export default async function MinistryPage({ params }: Props) {
                         <h1 className="text-3xl font-bold tracking-tight text-primary">
                             {ministry.name}
                         </h1>
+                        {isLeader && (
+                            <Link href={`/ministries/${ministry.id}/manage`}>
+                                <Button color="secondary">사역팀 관리</Button>
+                            </Link>
+                        )}
                         {!isMember && (
                             <form
                                 action={async () => {

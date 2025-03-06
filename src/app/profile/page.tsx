@@ -1,17 +1,52 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { Card, CardBody, Button, Divider, User, Tabs, Tab } from "@heroui/react";
-import { PencilIcon, BellIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, BellIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import LogoutButton from "@/components/profile/LogoutButton";
+
+interface ProfileData {
+    user: {
+        name?: string | null;
+        email?: string | null;
+        image?: string | null;
+    };
+    ministries: {
+        id: string;
+        name: string;
+        role: string;
+        isLeader: boolean;
+    }[];
+}
+
+// 서버 액션을 여기서 직접 정의
+async function getProfileData(): Promise<ProfileData | null> {
+    const response = await fetch("/api/profile");
+    if (!response.ok) return null;
+    return response.json();
+}
 
 export default function ProfilePage() {
-    const { data: session } = useSession();
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const handleLogout = () => {
-        signOut({ callbackUrl: "/login" });
-    };
+    useEffect(() => {
+        getProfileData().then((data) => {
+            setProfileData(data);
+            setLoading(false);
+        });
+    }, []);
 
-    if (!session) {
+    if (loading) {
+        return (
+            <div className="flex min-h-[50vh] items-center justify-center">
+                <div className="text-lg">Loading...</div>
+            </div>
+        );
+    }
+
+    if (!profileData) {
         return (
             <div className="flex min-h-[50vh] items-center justify-center">
                 <Card className="max-w-md p-6">
@@ -35,11 +70,11 @@ export default function ProfilePage() {
                 <Card className="p-4 md:col-span-1">
                     <CardBody className="flex flex-col items-center gap-3">
                         <User
-                            name={session.user?.name}
-                            description={session.user?.email}
+                            name={profileData.user.name}
+                            description={profileData.user.email}
                             avatarProps={{
-                                src: session.user?.image || "",
-                                alt: session.user?.name || "",
+                                src: profileData.user.image || "",
+                                alt: profileData.user.name || "",
                                 size: "lg",
                                 className: "w-16 h-16",
                             }}
@@ -65,15 +100,7 @@ export default function ProfilePage() {
                             >
                                 알림 설정
                             </Button>
-                            <Button
-                                variant="light"
-                                color="danger"
-                                startContent={<ArrowRightOnRectangleIcon className="h-4 w-4" />}
-                                className="w-full justify-start"
-                                onPress={handleLogout}
-                            >
-                                로그아웃
-                            </Button>
+                            <LogoutButton />
                         </div>
                     </CardBody>
                 </Card>
@@ -95,14 +122,14 @@ export default function ProfilePage() {
                                 <div className="space-y-4 mt-4">
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">이름</h4>
-                                        <p className="mt-1">{session.user?.name}</p>
+                                        <p className="mt-1">{profileData.user.name}</p>
                                     </div>
                                     <Divider />
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">
                                             이메일
                                         </h4>
-                                        <p className="mt-1">{session.user?.email}</p>
+                                        <p className="mt-1">{profileData.user.email}</p>
                                     </div>
                                     <Divider />
                                     <div>
@@ -121,7 +148,39 @@ export default function ProfilePage() {
                             </Tab>
                             <Tab key="ministry" title="사역팀">
                                 <div className="mt-4">
-                                    <p className="text-gray-500">참여중인 사역팀이 없습니다.</p>
+                                    {profileData.ministries.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {profileData.ministries.map((ministry) => (
+                                                <Card key={ministry.id} className="p-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <div>
+                                                            <h4 className="font-semibold">
+                                                                {ministry.name}
+                                                            </h4>
+                                                            <p className="text-sm text-gray-500">
+                                                                {ministry.role}
+                                                            </p>
+                                                        </div>
+                                                        {ministry.isLeader && (
+                                                            <Link
+                                                                href={`/ministries/${ministry.id}/manage`}
+                                                            >
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="light"
+                                                                    color="primary"
+                                                                >
+                                                                    관리
+                                                                </Button>
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">참여중인 사역팀이 없습니다.</p>
+                                    )}
                                 </div>
                             </Tab>
                         </Tabs>
