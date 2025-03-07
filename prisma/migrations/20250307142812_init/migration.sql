@@ -252,6 +252,20 @@ CREATE TABLE "ministry_positions" (
     CONSTRAINT "ministry_positions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "MinistryFile" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "ministryId" TEXT NOT NULL,
+    "uploadedById" TEXT NOT NULL,
+
+    CONSTRAINT "MinistryFile_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
 
@@ -275,6 +289,12 @@ CREATE INDEX "ministry_events_notice_id_idx" ON "ministry_events"("notice_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "feed_likes_feed_id_user_id_key" ON "feed_likes"("feed_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "MinistryFile_ministryId_idx" ON "MinistryFile"("ministryId");
+
+-- CreateIndex
+CREATE INDEX "MinistryFile_uploadedById_idx" ON "MinistryFile"("uploadedById");
 
 -- AddForeignKey
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -347,3 +367,9 @@ ALTER TABLE "feed_comments" ADD CONSTRAINT "feed_comments_user_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "ministry_positions" ADD CONSTRAINT "ministry_positions_ministry_id_fkey" FOREIGN KEY ("ministry_id") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MinistryFile" ADD CONSTRAINT "MinistryFile_ministryId_fkey" FOREIGN KEY ("ministryId") REFERENCES "ministries"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MinistryFile" ADD CONSTRAINT "MinistryFile_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

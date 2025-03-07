@@ -9,44 +9,7 @@ import { today, getLocalTimeZone } from "@internationalized/date";
 import { Chip } from "@heroui/chip";
 import { useState } from "react";
 import { ScheduleApplication } from "./ScheduleApplication";
-
-interface MinistryEvent {
-    id: string;
-    eventDate: string;
-    startTime: string;
-    endTime: string;
-}
-
-interface MinistryNotice {
-    id: string;
-    title: string;
-    content: string;
-    createdAt: string;
-    events: MinistryEvent[];
-    user: {
-        name: string | null;
-        image: string | null;
-    };
-}
-
-interface MinistryPosition {
-    id: string;
-    name: string;
-    description: string | null;
-    maxMembers: number | null;
-    ministryId: string;
-}
-
-interface MinistrySchedule {
-    id: string;
-    date: string;
-    position: MinistryPosition;
-    status: string;
-    user: {
-        name: string | null;
-        image: string | null;
-    };
-}
+import type { MinistrySchedule, MinistryPosition, MinistryNotice } from "@/types/ministry";
 
 interface MinistrySchedulesProps {
     schedules: MinistrySchedule[];

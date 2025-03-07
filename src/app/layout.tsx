@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/auth";
 import { SessionProvider } from "next-auth/react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "./providers";
@@ -51,6 +52,7 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const session = await auth();
     return (
         <html lang="ko" dir="ltr">
             <head>
@@ -67,7 +69,7 @@ export default async function RootLayout({
             `}</style>
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <SessionProvider>
+                <SessionProvider session={session}>
                     <Providers>
                         <Suspense fallback={<Loading />}>
                             <AppSidebar>{children}</AppSidebar>

@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
             {
                 hostname: "images.unsplash.com",
             },
+            {
+                hostname: "gospel-house-archive.s3.ap-northeast-2.amazonaws.com",
+            },
         ],
     },
     async headers() {
@@ -59,6 +62,11 @@ const nextConfig: NextConfig = {
                 ],
             },
         ];
+    },
+    webpack: (config) => {
+        config.resolve.alias.canvas = false;
+        config.resolve.alias.encoding = false;
+        return config;
     },
 };
 

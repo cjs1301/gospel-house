@@ -1,17 +1,10 @@
 import { Button } from "@heroui/react";
 import { useState } from "react";
-
-interface MinistryPosition {
-    id: string;
-    name: string;
-    description: string | null;
-    maxMembers: number | null;
-    ministryId: string;
-}
+import type { MinistryPosition } from "@/types/ministry";
 
 interface ScheduleApplicationProps {
     ministryId: string;
-    positions: MinistryPosition[];
+    positions: Omit<MinistryPosition, "ministryId">[];
     selectedDate: Date;
 }
 

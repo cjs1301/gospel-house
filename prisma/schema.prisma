@@ -1,6 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
  
 generator client {
@@ -30,6 +31,7 @@ model User {
   feeds        ChurchFeed[]
   likes        FeedLike[]
   comments     FeedComment[]
+  uploadedFiles MinistryFile[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -138,8 +140,6 @@ model ChurchMember {
   @@map("church_members")
 }
 
-
-
 // Ministry Model (사역팀)
 model Ministry {
   id          String     @id @default(cuid())
@@ -155,7 +155,8 @@ model Ministry {
   notices     MinistryNotice[]
   schedules   MinistrySchedule[]
   announcements MinistryAnnouncement[]
-  positions   MinistryPosition[] 
+  positions   MinistryPosition[]
+  files       MinistryFile[]
 
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
@@ -163,19 +164,19 @@ model Ministry {
   @@map("ministries")
 }
 enum ChurchRole {
-  ADMIN     @map("admin")      // 교회 관리자
-  MEMBER    @map("member")     // 일반 멤버
-  PENDING   @map("pending")    // 승인 대기 중
+    ADMIN     @map("admin")      // 교회 관리자
+    MEMBER    @map("member")     // 일반 멤버
+    PENDING   @map("pending")    // 승인 대기 중
 
-  @@map("church_roles")
+    @@map("church_roles")
 }
 
 // Service level role enum
 enum Role {
-  SUPER_ADMIN  @map("super_admin")  // 서비스 전체 관리자
-  USER         @map("user")         // 일반 사용자
+    SUPER_ADMIN  @map("super_admin")  // 서비스 전체 관리자
+    USER         @map("user")         // 일반 사용자
 
-  @@map("roles")
+    @@map("roles")
 }
 
 // Ministry Member Role enum
@@ -381,4 +382,23 @@ model MinistryPosition {
   schedules   MinistrySchedule[]
 
   @@map("ministry_positions")
+}
+
+// Ministry File Model
+model MinistryFile {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String
+  size      Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  ministry     Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  ministryId  String
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedById String
+
+  @@index([ministryId])
+  @@index([uploadedById])
 }
