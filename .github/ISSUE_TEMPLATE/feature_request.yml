@@ -2,7 +2,8 @@ name: 💡 Feature Request
 description: 새로운 기능을 제안해주세요
 title: "[Feature]: "
 labels: ["enhancement"]
-type: feature
+assignees:
+    - octocat
 body:
     - type: markdown
       attributes:
