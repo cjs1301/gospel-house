@@ -2,26 +2,13 @@ name: 💡 Feature Request
 description: 새로운 기능을 제안해주세요
 title: "[Feature]: "
 labels: ["enhancement"]
+assignees:
+    - octocat
 body:
     - type: markdown
       attributes:
           value: |
               새로운 기능을 제안해 주셔서 감사합니다. 자세한 내용을 알려주시면 더 나은 논의가 가능합니다.
-
-    - type: dropdown
-      id: issue-type
-      attributes:
-          label: Issue Type
-          description: 이슈의 종류를 선택해주세요
-          options:
-              - Feature Request (기능 요청)
-              - Enhancement (개선 사항)
-              - UI/UX Improvement (UI/UX 개선)
-              - Performance Improvement (성능 개선)
-              - Other (기타)
-          default: 0
-      validations:
-          required: true
 
     - type: textarea
       id: before
