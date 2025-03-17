@@ -1,7 +1,7 @@
 name: 💡 Feature Request
 description: 새로운 기능을 제안해주세요
 title: "[Feature]: "
-labels: ["enhancement"]
+labels: ["Priority: High", "Priority: Medium", "Priority: Low"]
 assignees:
     - octocat
 body:
