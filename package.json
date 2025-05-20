@@ -1,66 +1,21 @@
 {
     "name": "gospel-house",
-    "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
-        "build": "prisma generate && prisma migrate deploy && next build",
-        "postinstall": "prisma generate",
-        "start": "next start",
-        "lint": "next lint"
-    },
-    "dependencies": {
-        "@auth/prisma-adapter": "^2.7.4",
-        "@aws-sdk/client-s3": "^3.758.0",
-        "@aws-sdk/s3-request-presigner": "^3.758.0",
-        "@headlessui/react": "^2.2.0",
-        "@heroicons/react": "^2.2.0",
-        "@heroui/form": "^2.1.14",
-        "@heroui/react": "^2.7.2",
-        "@internationalized/date": "^3.7.0",
-        "@neondatabase/serverless": "^0.10.4",
-        "@prisma/adapter-neon": "^6.4.1",
-        "@prisma/client": "^6.4.1",
-        "@prisma/extension-accelerate": "^1.2.2",
-        "@react-aria/i18n": "^3.12.5",
-        "@serwist/next": "^9.0.12",
-        "clsx": "^2.1.1",
-        "date-fns": "^4.1.0",
-        "firebase": "^11.3.1",
-        "firebase-admin": "^13.1.0",
-        "framer-motion": "^12.4.7",
-        "next": "15.1.7",
-        "next-auth": "5.0.0-beta.25",
-        "pg": "^8.13.3",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "react-pdf": "^9.2.1",
-        "serwist": "^9.0.12",
-        "tailwind-merge": "^3.0.2",
-        "web-push": "^3.6.7",
-        "ws": "^8.18.1",
-        "zod": "^3.24.2"
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "lint": "turbo run lint",
+        "clean": "turbo run clean",
+        "format": "prettier --write \"**/*.{ts,tsx,md}\""
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3",
-        "@serwist/build": "^9.0.12",
-        "@types/node": "^20",
-        "@types/react": "^19",
-        "@types/react-dom": "^19",
-        "@types/tailwindcss": "^3.1.0",
-        "@types/web-push": "^3.6.4",
-        "@types/ws": "^8.5.14",
-        "bufferutil": "^4.0.9",
-        "eslint": "^9",
-        "eslint-config-next": "15.1.7",
-        "postcss": "^8",
-        "prisma": "^6.4.1",
-        "rimraf": "^6.0.1",
-        "tailwindcss": "^3.4.1",
-        "tsx": "^4.19.3",
-        "typescript": "^5"
+        "@turbo/gen": "^2.5.3",
+        "prettier": "^3.5.3",
+        "turbo": "^2.5.3"
     },
-    "prisma": {
-        "seed": "tsx prisma/seed.ts"
-    }
+    "packageManager": "pnpm@8.15.4",
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ]
 }
