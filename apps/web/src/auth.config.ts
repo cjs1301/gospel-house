@@ -19,6 +19,7 @@ export default {
     ],
     session: {
         strategy: "jwt",
+        maxAge: 1 * 60 * 60, // 1 hour
     },
     callbacks: {
         async jwt({ token, trigger, session, user, account }) {

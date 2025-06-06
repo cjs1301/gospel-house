@@ -33,7 +33,9 @@ export default function LoginPage() {
                             if (session) {
                                 await signOut({ redirect: false });
                             }
-                            await signIn("kakao", { redirectTo: "/" });
+                            await signIn("kakao", {
+                                redirectTo: "/lyric-extractor",
+                            });
                         }}
                     >
                         <Button

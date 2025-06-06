@@ -1,38 +1,31 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@heroui/react";
 import {
     ArrowUpTrayIcon,
     DocumentTextIcon,
     PresentationChartLineIcon,
 } from "@heroicons/react/24/outline";
+import { clsx } from "clsx";
+import dynamic from "next/dynamic";
+
+// React-PDF CSS 스타일을 정적으로 import
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
-import { clsx } from "clsx";
 
-// Promise.withResolvers polyfill for older Node.js versions
-if (typeof Promise.withResolvers === "undefined") {
-    // @ts-expect-error Adding polyfill for Promise.withResolvers to global Promise object
-    Promise.withResolvers = function <T>() {
-        let resolve: (value: T) => void;
-        let reject: (reason?: unknown) => void;
-        const promise = new Promise<T>((res, rej) => {
-            resolve = res;
-            reject = rej;
-        });
-        return { promise, resolve: resolve!, reject: reject! };
-    };
-}
-
-// PDF.js worker 설정
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-).toString();
+// React-PDF 컴포넌트를 동적으로 로드
+const Document = dynamic(() => import("react-pdf").then((mod) => mod.Document), {
+    ssr: false,
+});
+const Page = dynamic(() => import("react-pdf").then((mod) => mod.Page), {
+    ssr: false,
+});
 
 export default function LyricExtractorPage() {
+    const [isClient, setIsClient] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [pdfjs, setPdfjs] = useState<any>(null);
     const [file, setFile] = useState<File | null>(null);
     const [numPages, setNumPages] = useState<number>();
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -51,6 +44,34 @@ export default function LyricExtractorPage() {
     } | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        // 클라이언트에서만 실행
+        setIsClient(true);
+
+        // Promise.withResolvers polyfill
+        if (typeof Promise.withResolvers === "undefined") {
+            // @ts-expect-error Adding polyfill for Promise.withResolvers to global Promise object
+            Promise.withResolvers = function <T>() {
+                let resolve: (value: T) => void;
+                let reject: (reason?: unknown) => void;
+                const promise = new Promise<T>((res, rej) => {
+                    resolve = res;
+                    reject = rej;
+                });
+                return { promise, resolve: resolve!, reject: reject! };
+            };
+        }
+
+        // PDF.js 동적 로딩
+        import("react-pdf").then((reactPdf) => {
+            reactPdf.pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+                "pdfjs-dist/build/pdf.worker.min.mjs",
+                import.meta.url
+            ).toString();
+            setPdfjs(reactPdf.pdfjs);
+        });
+    }, []);
 
     const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
         setNumPages(numPages);
@@ -107,13 +128,17 @@ export default function LyricExtractorPage() {
     // PDF 페이지를 이미지로 변환하는 함수
     const convertPdfPageToImage = useCallback(
         async (file: File, pageNumber: number): Promise<Blob> => {
+            if (!pdfjs) throw new Error("PDF.js가 로드되지 않았습니다.");
+
             return new Promise((resolve, reject) => {
                 const loadingTask = pdfjs.getDocument(URL.createObjectURL(file));
 
                 loadingTask.promise
-                    .then((pdf) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .then((pdf: any) => {
                         pdf.getPage(pageNumber)
-                            .then((page) => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            .then((page: any) => {
                                 const scale = 2.0; // 고해상도를 위한 스케일
                                 const viewport = page.getViewport({ scale });
 
@@ -135,7 +160,7 @@ export default function LyricExtractorPage() {
 
                                 page.render(renderContext)
                                     .promise.then(() => {
-                                        canvas.toBlob((blob) => {
+                                        canvas.toBlob((blob: Blob | null) => {
                                             if (blob) {
                                                 resolve(blob);
                                             } else {
@@ -150,7 +175,7 @@ export default function LyricExtractorPage() {
                     .catch(reject);
             });
         },
-        []
+        [pdfjs]
     );
 
     // 스트리밍 텍스트를 파싱하여 자막 형태로 변환
@@ -196,7 +221,7 @@ export default function LyricExtractorPage() {
     };
 
     const extractLyricsFromPDF = useCallback(async () => {
-        if (!file || !numPages) return;
+        if (!file || !numPages || !pdfjs) return;
 
         setIsProcessing(true);
         setStreamingText("");
@@ -256,7 +281,7 @@ export default function LyricExtractorPage() {
         } finally {
             setIsProcessing(false);
         }
-    }, [file, numPages, convertPdfPageToImage]);
+    }, [file, numPages, convertPdfPageToImage, pdfjs]);
 
     const generateSlideshow = useCallback(() => {
         if (parsedLyrics && parsedLyrics.sections.length > 0) {
@@ -278,6 +303,18 @@ export default function LyricExtractorPage() {
             );
         }
     }, [parsedLyrics]);
+
+    // 로딩 상태
+    if (!isClient || !pdfjs) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">가사 추출기를 로딩 중...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (showSlideshow && parsedLyrics) {
         return (
