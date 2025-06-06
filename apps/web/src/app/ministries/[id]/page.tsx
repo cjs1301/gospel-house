@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import MinistryNotices from "@/components/ministry/MinistryNotices";
-import MinistrySchedules from "@/components/ministry/MinistrySchedules";
+// import MinistrySchedules from "@/components/ministry/MinistrySchedules";
 import { Button, Card, CardBody, Tabs, Tab } from "@heroui/react";
 import Link from "next/link";
 import { BellIcon, CalendarIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
@@ -130,12 +130,12 @@ export default function MinistryPage() {
                                 }
                             >
                                 <div className="py-4">
-                                    <MinistrySchedules
+                                    {/* <MinistrySchedules
                                         schedules={ministryData.schedules}
                                         notices={ministryData.notices}
                                         positions={ministryData.positions}
                                         userMinistries={[ministryData.id]}
-                                    />
+                                    /> */}
                                 </div>
                             </Tab>
                             <Tab

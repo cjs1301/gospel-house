@@ -17,4 +17,37 @@ export default {
             },
         }),
     ],
+    session: {
+        strategy: "jwt",
+    },
+    callbacks: {
+        async jwt({ token, trigger, session, user, account }) {
+            // console.log('jwt!', token);
+
+            if (user) {
+                token = { ...token, ...user, provider: account?.provider };
+            }
+            if (trigger === "update") {
+                // console.log('update!', session.user);
+                token = { ...token, ...session.user };
+                // console.log('token!', token);
+            }
+            // console.log('token!', token);
+            return token;
+        },
+        async session({ session, token }) {
+            if (session.user) {
+                session.user.id = token.id as string;
+                session.user.hasChurch = token.hasChurch as boolean;
+            }
+            return session;
+        },
+        authorized: async ({ auth }) => {
+            return !!auth;
+        },
+    },
+    pages: {
+        signIn: "/login",
+        error: "/login",
+    },
 } satisfies NextAuthConfig;
