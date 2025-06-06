@@ -11,6 +11,7 @@
                 "AUTH_KAKAO_ID",
                 "AUTH_KAKAO_SECRET",
                 "DATABASE_URL",
+                "DIRECT_URL",
                 "AWS_REGION",
                 "AWS_ACCESS_KEY_ID",
                 "AWS_SECRET_ACCESS_KEY",

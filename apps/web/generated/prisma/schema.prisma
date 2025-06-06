@@ -1,0 +1,406 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["queryCompiler", "driverAdapters"]
+  output          = "../generated/prisma"
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String?         @map("email")
+  emailVerified DateTime?       @map("email_verified")
+  image         String?
+  role          Role            @default(USER) // Add service-level role
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  // Church and Ministry relationships
+  churches        ChurchMember[]
+  ministries      MinistryMember[]
+  schedules       MinistrySchedule[]
+  ministryNotices MinistryNotice[]
+
+  // Feed relationships
+  feeds         ChurchFeed[]
+  likes         FeedLike[]
+  comments      FeedComment[]
+  uploadedFiles MinistryFile[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Account {
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique @map("credential_id")
+  userId               String  @map("user_id")
+  providerAccountId    String  @map("provider_account_id")
+  credentialPublicKey  String  @map("credential_public_key")
+  counter              Int     @map("counter")
+  credentialDeviceType String  @map("credential_device_type")
+  credentialBackedUp   Boolean @map("credential_backed_up")
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+  @@map("authenticators")
+}
+
+// Church Model
+model Church {
+  id          String  @id @default(cuid())
+  name        String
+  address     String?
+  description String?
+  image       String? // Add church image URL
+  instagram   String? // Add instagram URL
+  youtube     String? // Add youtube URL
+  homepage    String? // Add homepage URL
+
+  // Relationships
+  members    ChurchMember[]
+  ministries Ministry[]
+  notices    ChurchNotice[]
+  feeds      ChurchFeed[] // Add feeds relationship
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("churches")
+}
+
+// ChurchMember Model (교회 멤버 및 권한)
+model ChurchMember {
+  id   String     @id @default(cuid())
+  role ChurchRole @default(MEMBER)
+
+  // Relationships
+  userId   String @map("user_id")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  churchId String @map("church_id")
+  church   Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, churchId])
+  @@map("church_members")
+}
+
+// Ministry Model (사역팀)
+model Ministry {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  // Church relationship
+  churchId String @map("church_id")
+  church   Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  members       MinistryMember[]
+  notices       MinistryNotice[]
+  schedules     MinistrySchedule[]
+  announcements MinistryAnnouncement[]
+  positions     MinistryPosition[]
+  files         MinistryFile[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("ministries")
+}
+
+enum ChurchRole {
+  ADMIN   @map("admin") // 교회 관리자
+  MEMBER  @map("member") // 일반 멤버
+  PENDING @map("pending") // 승인 대기 중
+
+  @@map("church_roles")
+}
+
+// Service level role enum
+enum Role {
+  SUPER_ADMIN @map("super_admin") // 서비스 전체 관리자
+  USER        @map("user") // 일반 사용자
+
+  @@map("roles")
+}
+
+// Ministry Member Role enum
+enum MinistryRole {
+  ADMIN   @map("admin") // 사역팀 관리자
+  MEMBER  @map("member") // 일반 멤버
+  PENDING @map("pending") // 승인 대기 중
+
+  @@map("ministry_roles")
+}
+
+// Ministry Member (사역팀 멤버)
+model MinistryMember {
+  id   String       @id @default(cuid())
+  role MinistryRole @default(PENDING) // Change role to use enum
+
+  // Relationships
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ministryId String   @map("ministry_id")
+  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, ministryId])
+  @@map("ministry_members")
+}
+
+// Church Notice (교회 공지사항)
+model ChurchNotice {
+  id          String  @id @default(cuid())
+  title       String
+  content     String
+  isImportant Boolean @default(false) @map("is_important")
+
+  // Church relationship
+  churchId String @map("church_id")
+  church   Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("church_notices")
+}
+
+// Ministry Notice (사역팀 내부 공지사항)
+model MinistryNotice {
+  id         String   @id @default(cuid())
+  ministryId String   @map("ministry_id")
+  userId     String   @map("user_id")
+  title      String
+  content    String   @db.Text
+  startDate  DateTime @map("start_date") // 공지 시작일
+  endDate    DateTime @map("end_date") // 공지 종료일
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // 관계
+  ministry Ministry        @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events   MinistryEvent[]
+
+  @@index([ministryId])
+  @@index([userId])
+  @@map("ministry_notices")
+}
+
+// Ministry Event (사역팀 이벤트)
+model MinistryEvent {
+  id           String   @id @default(cuid())
+  noticeId     String   @map("notice_id")
+  title        String
+  description  String?  @db.Text
+  location     String?
+  eventDate    DateTime @map("event_date")
+  startTime    DateTime @map("start_time")
+  endTime      DateTime @map("end_time")
+  maxAttendees Int?     @map("max_attendees") // 최대 참석 인원 (선택)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // 관계
+  notice MinistryNotice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@index([noticeId])
+  @@map("ministry_events")
+}
+
+// Ministry Announcement (사역팀 전체 광고)
+model MinistryAnnouncement {
+  id          String  @id @default(cuid())
+  title       String
+  content     String
+  isImportant Boolean @default(false) @map("is_important")
+
+  // Ministry relationship
+  ministryId String   @map("ministry_id")
+  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("ministry_announcements")
+}
+
+// Ministry Schedule (사역팀 일정)
+model MinistrySchedule {
+  id         String   @id @default(cuid())
+  ministryId String   @map("ministry_id")
+  positionId String   @map("position_id")
+  userId     String   @map("user_id")
+  date       DateTime
+  status     String   @default("PENDING")
+
+  ministry Ministry         @relation(fields: [ministryId], references: [id])
+  position MinistryPosition @relation(fields: [positionId], references: [id])
+  user     User             @relation(fields: [userId], references: [id])
+
+  @@map("ministry_schedules")
+}
+
+// Church Feed Model (교회 피드)
+model ChurchFeed {
+  id      String @id @default(cuid())
+  content String
+
+  // Church and User relationship
+  churchId String @map("church_id")
+  church   Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  authorId String @map("author_id")
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Related content
+  images   FeedImage[]
+  likes    FeedLike[]
+  comments FeedComment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("church_feeds")
+}
+
+// Feed Image Model (피드 이미지)
+model FeedImage {
+  id    String @id @default(cuid())
+  url   String
+  order Int // 이미지 순서
+
+  // Feed relationship
+  feedId String     @map("feed_id")
+  feed   ChurchFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feed_images")
+}
+
+// Feed Like Model (피드 좋아요)
+model FeedLike {
+  id String @id @default(cuid())
+
+  // Feed and User relationship
+  feedId String     @map("feed_id")
+  feed   ChurchFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  userId String     @map("user_id")
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([feedId, userId])
+  @@map("feed_likes")
+}
+
+// Feed Comment Model (피드 댓글)
+model FeedComment {
+  id      String @id @default(cuid())
+  content String
+
+  // Feed and User relationship
+  feedId String     @map("feed_id")
+  feed   ChurchFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  userId String     @map("user_id")
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feed_comments")
+}
+
+model MinistryPosition {
+  id          String  @id @default(cuid())
+  ministryId  String  @map("ministry_id")
+  name        String // 포지션 이름 (드럼, 베이스 등)
+  description String? // 포지션 설명
+  maxMembers  Int? // 최대 인원 수 (null이면 제한 없음)
+
+  ministry  Ministry           @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  schedules MinistrySchedule[]
+
+  @@map("ministry_positions")
+}
+
+// Ministry File Model
+model MinistryFile {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  type      String
+  size      Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  ministry     Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+  ministryId   String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  uploadedById String
+
+  @@index([ministryId])
+  @@index([uploadedById])
+}
