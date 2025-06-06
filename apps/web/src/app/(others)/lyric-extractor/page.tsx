@@ -27,6 +27,8 @@ export default function LyricExtractorPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [pdfjs, setPdfjs] = useState<any>(null);
     const [file, setFile] = useState<File | null>(null);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [fileType, setFileType] = useState<"pdf" | "images" | null>(null);
     const [numPages, setNumPages] = useState<number>();
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -77,21 +79,48 @@ export default function LyricExtractorPage() {
         setNumPages(numPages);
     }, []);
 
-    const handleFileSelect = useCallback((selectedFile: File) => {
-        if (selectedFile && selectedFile.type === "application/pdf") {
-            setFile(selectedFile);
+    const handleFileSelect = useCallback((selectedFiles: FileList | File[]) => {
+        const files = Array.from(selectedFiles);
+
+        if (files.length === 0) return;
+
+        // 파일 타입 검증
+        const firstFile = files[0];
+        const supportedImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+        if (firstFile.type === "application/pdf") {
+            if (files.length > 1) {
+                alert("PDF 파일은 하나만 업로드할 수 있습니다.");
+                return;
+            }
+            setFile(firstFile);
+            setImageFiles([]);
+            setFileType("pdf");
+            setCurrentPage(1);
+            setShowSlideshow(false);
+        } else if (supportedImageTypes.includes(firstFile.type)) {
+            // 모든 파일이 이미지인지 확인
+            const allImages = files.every((file) => supportedImageTypes.includes(file.type));
+            if (!allImages) {
+                alert("모든 파일이 지원되는 이미지 형식(JPEG, PNG, WebP)이어야 합니다.");
+                return;
+            }
+
+            setImageFiles(files);
+            setFile(null);
+            setFileType("images");
             setCurrentPage(1);
             setShowSlideshow(false);
         } else {
-            alert("PDF 파일만 업로드할 수 있습니다.");
+            alert("PDF 파일 또는 이미지 파일(JPEG, PNG, WebP)만 업로드할 수 있습니다.");
         }
     }, []);
 
     const handleFileUpload = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
-            const uploadedFile = event.target.files?.[0];
-            if (uploadedFile) {
-                handleFileSelect(uploadedFile);
+            const uploadedFiles = event.target.files;
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                handleFileSelect(uploadedFiles);
             }
         },
         [handleFileSelect]
@@ -113,9 +142,9 @@ export default function LyricExtractorPage() {
             e.preventDefault();
             setIsDragOver(false);
 
-            const droppedFile = e.dataTransfer.files[0];
-            if (droppedFile) {
-                handleFileSelect(droppedFile);
+            const droppedFiles = e.dataTransfer.files;
+            if (droppedFiles && droppedFiles.length > 0) {
+                handleFileSelect(droppedFiles);
             }
         },
         [handleFileSelect]
@@ -139,6 +168,7 @@ export default function LyricExtractorPage() {
                         pdf.getPage(pageNumber)
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             .then((page: any) => {
+                                // 원래 스케일로 복원하여 인식률 향상
                                 const scale = 2.0; // 고해상도를 위한 스케일
                                 const viewport = page.getViewport({ scale });
 
@@ -160,13 +190,14 @@ export default function LyricExtractorPage() {
 
                                 page.render(renderContext)
                                     .promise.then(() => {
+                                        // PNG 포맷으로 복원하여 품질 보장
                                         canvas.toBlob((blob: Blob | null) => {
                                             if (blob) {
                                                 resolve(blob);
                                             } else {
                                                 reject(new Error("이미지 변환에 실패했습니다"));
                                             }
-                                        }, "image/png");
+                                        }, "image/png"); // PNG 포맷으로 복원
                                     })
                                     .catch(reject);
                             })
@@ -221,7 +252,8 @@ export default function LyricExtractorPage() {
     };
 
     const extractLyricsFromPDF = useCallback(async () => {
-        if (!file || !numPages || !pdfjs) return;
+        if (fileType === "pdf" && (!file || !numPages || !pdfjs)) return;
+        if (fileType === "images" && imageFiles.length === 0) return;
 
         setIsProcessing(true);
         setStreamingText("");
@@ -229,59 +261,140 @@ export default function LyricExtractorPage() {
         setParsedLyrics(null);
 
         try {
-            const formData = new FormData();
-
-            // 각 페이지를 이미지로 변환하여 FormData에 추가
-            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                const imageBlob = await convertPdfPageToImage(file, pageNum);
-                formData.append("images", imageBlob, `page-${pageNum}.png`);
-            }
-
-            const response = await fetch("/api/extract-lyrics-combined", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error("가사 추출에 실패했습니다.");
-            }
-
-            if (!response.body) {
-                throw new Error("응답 스트림을 받을 수 없습니다.");
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
             let accumulatedText = "";
+            const BATCH_SIZE = 2; // 이미지 2개씩 처리
 
-            while (true) {
-                const { done, value } = await reader.read();
+            if (fileType === "pdf") {
+                // PDF 처리 로직 (기존)
+                for (let startPage = 1; startPage <= numPages!; startPage += BATCH_SIZE) {
+                    const endPage = Math.min(startPage + BATCH_SIZE - 1, numPages!);
 
-                if (done) {
-                    setIsStreamingComplete(true);
-                    // 최종 파싱
-                    const parsed = parseStreamingLyrics(accumulatedText);
-                    setParsedLyrics(parsed);
-                    break;
+                    setStreamingText(
+                        accumulatedText + `\n📖 페이지 ${startPage}-${endPage} 처리 중...\n`
+                    );
+
+                    const formData = new FormData();
+
+                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+                        const imageBlob = await convertPdfPageToImage(file!, pageNum);
+                        formData.append("images", imageBlob, `page-${pageNum}.png`);
+                    }
+
+                    const response = await fetch("/api/extract-lyrics-combined", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 413) {
+                            throw new Error(
+                                `페이지 ${startPage}-${endPage} 처리 중 파일 크기 초과. 페이지를 더 작은 단위로 나누어 시도해주세요.`
+                            );
+                        }
+                        throw new Error(`페이지 ${startPage}-${endPage} 처리 실패`);
+                    }
+
+                    if (!response.body) {
+                        throw new Error("응답 스트림을 받을 수 없습니다.");
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            if (startPage + BATCH_SIZE <= numPages!) {
+                                accumulatedText += `\n\n--- 페이지 ${startPage}-${endPage} 완료 ---\n\n`;
+                                setStreamingText(accumulatedText);
+                            }
+                            break;
+                        }
+
+                        const chunk = decoder.decode(value);
+                        accumulatedText += chunk;
+                        setStreamingText(accumulatedText);
+
+                        const parsed = parseStreamingLyrics(accumulatedText);
+                        if (parsed.sections.length > 0) {
+                            setParsedLyrics(parsed);
+                        }
+                    }
                 }
+            } else if (fileType === "images") {
+                // 이미지 파일 처리 로직
+                for (let startIdx = 0; startIdx < imageFiles.length; startIdx += BATCH_SIZE) {
+                    const endIdx = Math.min(startIdx + BATCH_SIZE - 1, imageFiles.length - 1);
 
-                const chunk = decoder.decode(value);
-                accumulatedText += chunk;
-                setStreamingText(accumulatedText);
+                    setStreamingText(
+                        accumulatedText + `\n📖 이미지 ${startIdx + 1}-${endIdx + 1} 처리 중...\n`
+                    );
 
-                // 실시간 파싱 (부분적)
-                const parsed = parseStreamingLyrics(accumulatedText);
-                if (parsed.sections.length > 0) {
-                    setParsedLyrics(parsed);
+                    const formData = new FormData();
+
+                    for (let i = startIdx; i <= endIdx; i++) {
+                        formData.append("images", imageFiles[i], imageFiles[i].name);
+                    }
+
+                    const response = await fetch("/api/extract-lyrics-combined", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 413) {
+                            throw new Error(
+                                `이미지 ${startIdx + 1}-${endIdx + 1} 처리 중 파일 크기 초과.`
+                            );
+                        }
+                        throw new Error(`이미지 ${startIdx + 1}-${endIdx + 1} 처리 실패`);
+                    }
+
+                    if (!response.body) {
+                        throw new Error("응답 스트림을 받을 수 없습니다.");
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            if (startIdx + BATCH_SIZE < imageFiles.length) {
+                                accumulatedText += `\n\n--- 이미지 ${startIdx + 1}-${endIdx + 1} 완료 ---\n\n`;
+                                setStreamingText(accumulatedText);
+                            }
+                            break;
+                        }
+
+                        const chunk = decoder.decode(value);
+                        accumulatedText += chunk;
+                        setStreamingText(accumulatedText);
+
+                        const parsed = parseStreamingLyrics(accumulatedText);
+                        if (parsed.sections.length > 0) {
+                            setParsedLyrics(parsed);
+                        }
+                    }
                 }
             }
+
+            // 모든 배치 완료 후 최종 파싱
+            setIsStreamingComplete(true);
+            const finalParsed = parseStreamingLyrics(accumulatedText);
+            setParsedLyrics(finalParsed);
         } catch (error) {
             console.error("가사 추출 오류:", error);
-            alert("가사 추출 중 오류가 발생했습니다.");
+            alert(
+                "가사 추출 중 오류가 발생했습니다: " +
+                    (error instanceof Error ? error.message : "알 수 없는 오류")
+            );
         } finally {
             setIsProcessing(false);
         }
-    }, [file, numPages, convertPdfPageToImage, pdfjs]);
+    }, [file, numPages, convertPdfPageToImage, pdfjs, fileType, imageFiles]);
 
     const generateSlideshow = useCallback(() => {
         if (parsedLyrics && parsedLyrics.sections.length > 0) {
@@ -366,8 +479,28 @@ export default function LyricExtractorPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">악보 가사 추출기</h1>
                     <p className="text-gray-600">
-                        PDF 악보에서 가사를 추출하여 자막 슬라이드쇼를 만들어보세요
+                        PDF 악보 또는 악보 이미지에서 가사를 추출하여 자막 슬라이드쇼를 만들어보세요
                     </p>
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 max-w-2xl mx-auto">
+                        <h3 className="text-sm font-semibold text-blue-800 mb-2">
+                            💡 처리 방식 안내
+                        </h3>
+                        <ul className="text-xs text-blue-700 space-y-1 text-left">
+                            <li>
+                                • <strong>PDF 파일:</strong> 단일 파일 업로드 (페이지별 자동 분할)
+                            </li>
+                            <li>
+                                • <strong>이미지 파일:</strong> 다중 선택 가능 (JPEG, PNG, WebP)
+                            </li>
+                            <li>• 고품질 인식을 위해 원본 해상도를 유지합니다</li>
+                            <li>• 2개씩 나누어 순차 처리되어 안정적입니다</li>
+                            <li>• 각 배치별 처리 진행 상황을 실시간으로 확인할 수 있습니다</li>
+                            <li>
+                                • 가사가 명확하게 보이는 파일을 사용하면 더 정확한 결과를 얻을 수
+                                있습니다
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -375,14 +508,15 @@ export default function LyricExtractorPage() {
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                             <DocumentTextIcon className="w-6 h-6" />
-                            PDF 업로드 및 미리보기
+                            파일 업로드 및 미리보기
                         </h2>
 
                         <div className="mb-4">
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept=".pdf"
+                                accept=".pdf,image/jpeg,image/jpg,image/png,image/webp"
+                                multiple
                                 onChange={handleFileUpload}
                                 className="hidden"
                             />
@@ -395,7 +529,7 @@ export default function LyricExtractorPage() {
                                     "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200",
                                     isDragOver
                                         ? "border-blue-500 bg-blue-100 scale-105"
-                                        : file
+                                        : file || imageFiles.length > 0
                                           ? "border-blue-300 bg-blue-50"
                                           : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
                                 )}
@@ -409,28 +543,41 @@ export default function LyricExtractorPage() {
                                 <p className="text-gray-600">
                                     {isDragOver
                                         ? "파일을 여기에 놓으세요"
-                                        : file
-                                          ? file.name
-                                          : "PDF 파일을 선택하거나 드래그하세요"}
+                                        : fileType === "pdf"
+                                          ? file?.name
+                                          : fileType === "images"
+                                            ? `${imageFiles.length}개 이미지 선택됨`
+                                            : "PDF 파일 또는 이미지 파일을 선택하거나 드래그하세요"}
                                 </p>
-                                {!file && (
-                                    <p className="text-sm text-gray-500 mt-2">
-                                        클릭하거나 파일을 드래그해서 업로드하세요
-                                    </p>
+                                {!file && imageFiles.length === 0 && (
+                                    <div className="mt-2">
+                                        <p className="text-sm text-gray-500">
+                                            클릭하거나 드래그해서 업로드하세요
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            PDF: 단일 파일 | 이미지: 다중 선택 가능 (JPEG, PNG,
+                                            WebP)
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
-                        {file && (
+                        {(file || imageFiles.length > 0) && (
                             <>
                                 <div className="mb-4 flex gap-2 flex-wrap">
                                     <Button
                                         onPress={extractLyricsFromPDF}
                                         isLoading={isProcessing}
                                         startContent={<DocumentTextIcon className="w-4 h-4" />}
-                                        isDisabled={!numPages}
+                                        isDisabled={
+                                            fileType === "pdf" ? !numPages : imageFiles.length === 0
+                                        }
                                     >
-                                        가사 추출하기 {numPages && `(${numPages}페이지)`}
+                                        가사 추출하기
+                                        {fileType === "pdf" && numPages && ` (${numPages}페이지)`}
+                                        {fileType === "images" &&
+                                            ` (${imageFiles.length}개 이미지)`}
                                     </Button>
 
                                     {parsedLyrics && parsedLyrics.sections.length > 0 && (
@@ -446,57 +593,93 @@ export default function LyricExtractorPage() {
                                     )}
                                 </div>
 
-                                <div className="border rounded-lg p-4 bg-gray-50 max-h-96 overflow-auto">
-                                    <Document
-                                        file={file}
-                                        onLoadSuccess={onDocumentLoadSuccess}
-                                        loading={
-                                            <div className="text-center p-4">PDF 로딩 중...</div>
-                                        }
-                                        error={
-                                            <div className="text-center p-4 text-red-600">
-                                                PDF 로딩 실패
-                                            </div>
-                                        }
-                                    >
-                                        <Page
-                                            pageNumber={currentPage}
-                                            width={400}
-                                            renderTextLayer={false}
-                                            renderAnnotationLayer={false}
-                                        />
-                                    </Document>
+                                {fileType === "pdf" && (
+                                    <div className="border rounded-lg p-4 bg-gray-50 overflow-auto">
+                                        <Document
+                                            file={file}
+                                            onLoadSuccess={onDocumentLoadSuccess}
+                                            loading={
+                                                <div className="text-center p-4">
+                                                    PDF 로딩 중...
+                                                </div>
+                                            }
+                                            error={
+                                                <div className="text-center p-4 text-red-600">
+                                                    PDF 로딩 실패
+                                                </div>
+                                            }
+                                        >
+                                            <Page
+                                                pageNumber={currentPage}
+                                                width={400}
+                                                renderTextLayer={false}
+                                                renderAnnotationLayer={false}
+                                            />
+                                        </Document>
 
-                                    {numPages && numPages > 1 && (
-                                        <div className="mt-4 flex justify-between items-center">
-                                            <Button
-                                                size="sm"
-                                                variant="flat"
-                                                onPress={() =>
-                                                    setCurrentPage(Math.max(1, currentPage - 1))
-                                                }
-                                                isDisabled={currentPage <= 1}
-                                            >
-                                                이전 페이지
-                                            </Button>
-                                            <span className="text-sm text-gray-600">
-                                                {currentPage} / {numPages}
-                                            </span>
-                                            <Button
-                                                size="sm"
-                                                variant="flat"
-                                                onPress={() =>
-                                                    setCurrentPage(
-                                                        Math.min(numPages, currentPage + 1)
-                                                    )
-                                                }
-                                                isDisabled={currentPage >= numPages}
-                                            >
-                                                다음 페이지
-                                            </Button>
+                                        {numPages && numPages > 1 && (
+                                            <div className="mt-4 flex justify-between items-center">
+                                                <Button
+                                                    size="sm"
+                                                    variant="flat"
+                                                    onPress={() =>
+                                                        setCurrentPage(Math.max(1, currentPage - 1))
+                                                    }
+                                                    isDisabled={currentPage <= 1}
+                                                >
+                                                    이전 페이지
+                                                </Button>
+                                                <span className="text-sm text-gray-600">
+                                                    {currentPage} / {numPages}
+                                                </span>
+                                                <Button
+                                                    size="sm"
+                                                    variant="flat"
+                                                    onPress={() =>
+                                                        setCurrentPage(
+                                                            Math.min(numPages, currentPage + 1)
+                                                        )
+                                                    }
+                                                    isDisabled={currentPage >= numPages}
+                                                >
+                                                    다음 페이지
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {fileType === "images" && (
+                                    <div className="border rounded-lg p-4 bg-gray-50 max-h-96 overflow-auto">
+                                        <h3 className="text-sm font-semibold mb-3 text-gray-700">
+                                            선택된 이미지 ({imageFiles.length}개)
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            {imageFiles.map((imageFile, index) => (
+                                                <div key={index} className="relative group">
+                                                    <img
+                                                        src={URL.createObjectURL(imageFile)}
+                                                        alt={`이미지 ${index + 1}`}
+                                                        className="w-full h-32 object-cover rounded-lg border"
+                                                        onLoad={(e) =>
+                                                            URL.revokeObjectURL(
+                                                                (e.target as HTMLImageElement).src
+                                                            )
+                                                        }
+                                                    />
+                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                                        <span className="text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            {index + 1}번째 이미지
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1 truncate">
+                                                        {imageFile.name}
+                                                    </p>
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
@@ -506,7 +689,7 @@ export default function LyricExtractorPage() {
                         <h2 className="text-xl font-semibold mb-4">추출된 가사</h2>
 
                         {parsedLyrics && parsedLyrics.sections.length > 0 ? (
-                            <div className="space-y-4 max-h-96 overflow-y-auto">
+                            <div className="space-y-4 overflow-y-auto">
                                 {parsedLyrics.title && (
                                     <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
                                         <h3 className="text-xl font-bold text-center text-blue-800">
@@ -546,9 +729,6 @@ export default function LyricExtractorPage() {
                                     <div>
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
                                         <p>가사를 추출하고 있습니다...</p>
-                                        <p className="text-sm mt-1">
-                                            GPT-4.1로 악보를 분석하고 있어요
-                                        </p>
 
                                         {/* 실시간 가사 미리보기 */}
                                         {parsedLyrics && (
