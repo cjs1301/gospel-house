@@ -6,10 +6,15 @@
         "dev": "turbo run dev",
         "lint": "turbo run lint",
         "clean": "turbo run clean",
+        "generate": "pnpm run generate",
         "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    },
+    "dependencies": {
+        "@prisma/client": "6.9.0"
     },
     "devDependencies": {
         "@turbo/gen": "^2.5.3",
+        "prisma": "6.9.0",
         "prettier": "^3.5.3",
         "turbo": "^2.5.3"
     },
