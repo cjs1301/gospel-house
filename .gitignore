@@ -45,5 +45,5 @@ firebase-adminsdk-key.json
 # Cursor settings
 .cursor/
 .cursor/*
-
+.turbo/*
 /prisma/seed.ts

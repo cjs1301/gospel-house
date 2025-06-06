@@ -1,0 +1,45 @@
+
+
+> gospel-house@0.1.0 build /Users/choejaesong/Documents/github/gospel-house/apps/web
+> prisma generate && prisma migrate deploy && next build
+
+[2mEnvironment variables loaded from .env[22m
+[2mPrisma schema loaded from prisma/schema.prisma[22m
+
+
+✔ Generated [1mPrisma Client[22m (v6.9.0)[2m to ./../../node_modules/.pnpm/@prisma+client@6.9.0_prisma@6.9.0_typescript@5.8.3/node_modules/@prisma/client[22m in 102ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+[2mEnvironment variables loaded from .env[22m
+[2mPrisma schema loaded from prisma/schema.prisma[22m
+[2mDatasource "db": PostgreSQL database "neondb", schema "public" at "ep-aged-surf-a12rq6i9.ap-southeast-1.aws.neon.tech"[22m
+
+1 migration found in prisma/migrations
+
+
+[32mNo pending migrations to apply.[39m
+   [1m[38;2;173;127;168m▲ Next.js 15.3.3[39m[22m
+   - Environments: .env
+
+ [37m[1m [22m[39m Creating an optimized production build ...
+ [32m[1m✓[22m[39m (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+ [32m[1m✓[22m[39m Compiled successfully in 17.0s
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39mFailed to compile.
+
+./src/components/ministry/MinistrySchedules.tsx:77:25
+Type error: Type 'CalendarDate' is not assignable to type 'DateValue | null | undefined'.
+  Type 'CalendarDate' is not assignable to type 'ZonedDateTime'.
+    Property '#private' in type 'CalendarDate' refers to a different member that cannot be accessed from within type 'ZonedDateTime'.
+
+[0m [90m 75 |[39m                 [33m<[39m[33mCardBody[39m className[33m=[39m[32m"items-center"[39m[33m>[39m[0m
+[0m [90m 76 |[39m                     [33m<[39m[33mCalendar[39m[0m
+[0m[31m[1m>[22m[39m[90m 77 |[39m                         value[33m=[39m{selectedDate}[0m
+[0m [90m    |[39m                         [31m[1m^[22m[39m[0m
+[0m [90m 78 |[39m                         onChange[33m=[39m{setSelectedDate}[0m
+[0m [90m 79 |[39m                         calendarWidth[33m=[39m{[35m300[39m}[0m
+[0m [90m 80 |[39m                         minValue[33m=[39m{today(getLocalTimeZone())}[0m
+[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[?25hNext.js build worker exited with code: 1 and signal: null
+[?25l [36m.[39m [?25h[41m[30m ELIFECYCLE [39m[49m [31mCommand failed with exit code 1.[39m
