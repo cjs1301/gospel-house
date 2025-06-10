@@ -32,7 +32,6 @@ export default function LoginPage() {
 
             // 카카오 로그인 시도
             await signIn("kakao", {
-                redirect: true,
                 redirectTo: "/",
             });
             router.push("/");
