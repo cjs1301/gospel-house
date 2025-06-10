@@ -34,7 +34,7 @@ export default function LoginPage() {
                                 await signOut({ redirect: false });
                             }
                             await signIn("kakao", {
-                                redirectTo: "/lyric-extractor",
+                                redirectTo: "/",
                             });
                         }}
                     >

@@ -1,56 +1,52 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import { prisma } from "@/prisma";
-import FeedList from "@/components/FeedList";
 import Link from "next/link";
-import { GlobeAltIcon } from "@heroicons/react/24/outline";
-import { Card, CardBody, Avatar } from "@heroui/react";
+import { MusicalNoteIcon } from "@heroicons/react/24/outline";
+import { Card, CardBody } from "@heroui/react";
 
 export default async function Home() {
-    const session = await auth();
-    if (!session) {
-        redirect("/login");
-    }
+    // const session = await auth();
+    // if (!session) {
+    //     redirect("/login");
+    // }
 
-    // 현재 로그인한 유저가 속한 교회의 피드를 가져옵니다
-    const churchMember = await prisma.churchMember.findFirst({
-        where: { userId: session.user.id },
-        include: { church: true },
-    });
+    // // 현재 로그인한 유저가 속한 교회의 피드를 가져옵니다
+    // const churchMember = await prisma.churchMember.findFirst({
+    //     where: { userId: session.user.id },
+    //     include: { church: true },
+    // });
 
-    if (!churchMember) {
-        redirect("/onboarding");
-    }
+    // if (!churchMember) {
+    //     redirect("/onboarding");
+    // }
 
     // 교회 피드를 가져옵니다
-    const feeds = await prisma.churchFeed.findMany({
-        where: { churchId: churchMember.church.id },
-        include: {
-            author: true,
-            images: true,
-            comments: {
-                include: {
-                    user: true,
-                },
-            },
-            likes: {
-                where: { userId: session.user.id },
-            },
-            _count: {
-                select: {
-                    likes: true,
-                    comments: true,
-                },
-            },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+    // const feeds = await prisma.churchFeed.findMany({
+    //     where: { churchId: churchMember.church.id },
+    //     include: {
+    //         author: true,
+    //         images: true,
+    //         comments: {
+    //             include: {
+    //                 user: true,
+    //             },
+    //         },
+    //         likes: {
+    //             where: { userId: session.user.id },
+    //         },
+    //         _count: {
+    //             select: {
+    //                 likes: true,
+    //                 comments: true,
+    //             },
+    //         },
+    //     },
+    //     orderBy: { createdAt: "desc" },
+    // });
 
     return (
         <div className="min-h-screen bg-background">
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 {/* 헤더 카드 */}
-                <Card className="mb-8 bg-gradient-to-r from-primary/10 via-background to-background">
+                {/* <Card className="mb-8 bg-gradient-to-r from-primary/10 via-background to-background">
                     <CardBody>
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                             <div className="flex items-center gap-4">
@@ -75,7 +71,6 @@ export default async function Home() {
                                 </div>
                             </div>
 
-                            {/* 소셜 미디어 링크 */}
                             <div className="flex items-center gap-4">
                                 {churchMember.church.instagram && (
                                     <Link
@@ -117,9 +112,28 @@ export default async function Home() {
                             </div>
                         </div>
                     </CardBody>
-                </Card>
+                </Card> */}
 
-                <FeedList feeds={feeds} userId={session.user.id} />
+                {/* 페이지 바로가기 카드 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <Link href="/lyric-extractor">
+                        <Card className="hover:bg-primary/5 transition-colors cursor-pointer h-full">
+                            <CardBody>
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-lg">
+                                        <MusicalNoteIcon className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold">가사 추출기</h3>
+                                        <p className="text-sm text-gray-500">
+                                            PDF, 이미지 등에서 가사를 추출하고 관리하세요
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardBody>
+                        </Card>
+                    </Link>
+                </div>
             </main>
         </div>
     );

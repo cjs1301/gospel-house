@@ -212,43 +212,107 @@ export default function LyricExtractorPage() {
     // 스트리밍 텍스트를 파싱하여 자막 형태로 변환
     const parseStreamingLyrics = (text: string) => {
         const lines = text.split("\n");
-        let title = "";
+        let mainTitle = ""; // 첫 번째 곡의 제목을 메인 제목으로 사용
         const sections: Array<{ type: string; lines: string[] }> = [];
-        let currentSection: { type: string; lines: string[] } | null = null;
+        let currentLyrics: string[] = [];
+        let currentSongTitle = "";
+        let foundAnyTitle = false;
 
         for (const line of lines) {
             const trimmed = line.trim();
 
-            // 제목 추출
-            if (trimmed.startsWith("===") && trimmed.endsWith("===")) {
-                title = trimmed.replace(/===/g, "").trim();
-                continue;
-            }
+            // 빈 줄 건너뛰기
+            if (!trimmed) continue;
 
-            // 섹션 헤더 ([1절], [후렴] 등)
-            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-                if (currentSection && currentSection.lines.length > 0) {
-                    sections.push(currentSection);
+            // 제목 추출 (=== 곡제목 === 또는 ### 곡제목 형식)
+            if (
+                (trimmed.startsWith("===") && trimmed.endsWith("===")) ||
+                (trimmed.startsWith("### ") &&
+                    !trimmed.includes("규칙") &&
+                    !trimmed.includes("instructions"))
+            ) {
+                // 이전 곡의 가사가 있다면 저장
+                if (currentSongTitle && currentLyrics.length > 0) {
+                    sections.push({
+                        type: currentSongTitle,
+                        lines: [...currentLyrics],
+                    });
+                    currentLyrics = [];
                 }
-                currentSection = {
-                    type: trimmed.slice(1, -1),
-                    lines: [],
-                };
+
+                // 새로운 곡 제목 추출
+                if (trimmed.startsWith("===")) {
+                    currentSongTitle = trimmed.replace(/===/g, "").trim();
+                } else if (trimmed.startsWith("### ")) {
+                    currentSongTitle = trimmed.replace(/### /g, "").trim();
+                }
+
+                // 첫 번째 곡의 제목을 메인 제목으로 설정
+                if (!foundAnyTitle) {
+                    mainTitle = currentSongTitle;
+                    foundAnyTitle = true;
+                }
+
                 continue;
             }
 
-            // 가사 라인
-            if (trimmed && currentSection) {
-                currentSection.lines.push(trimmed);
+            // 불필요한 내용 강력 필터링
+            const shouldSkip =
+                // 구분선
+                trimmed.startsWith("---") ||
+                trimmed.startsWith("___") ||
+                // 처리 상태 메시지
+                trimmed.startsWith("📖") ||
+                trimmed.includes("처리 중") ||
+                trimmed.includes("완료") ||
+                // GPT 설명 문장
+                trimmed.toLowerCase().includes("sure") ||
+                trimmed.toLowerCase().includes("here's") ||
+                trimmed.toLowerCase().includes("according to") ||
+                trimmed.toLowerCase().includes("organized") ||
+                trimmed.toLowerCase().includes("instructions") ||
+                trimmed.toLowerCase().includes("specified") ||
+                trimmed.toLowerCase().includes("i have") ||
+                trimmed.toLowerCase().includes("the text") ||
+                trimmed.toLowerCase().includes("cleaned") ||
+                // 한국어 설명
+                trimmed.includes("이 가사는") ||
+                trimmed.includes("정리한 것입니다") ||
+                trimmed.includes("여기서 다른 요청으로") ||
+                trimmed.includes("규칙에 따라") ||
+                trimmed.includes("형식으로") ||
+                // 단순 영어 단어들
+                (/^[a-zA-Z\s,.!?-]+$/.test(trimmed) &&
+                    trimmed.length < 50 &&
+                    (trimmed.toLowerCase().includes("text") ||
+                        trimmed.toLowerCase().includes("rules") ||
+                        trimmed.toLowerCase().includes("format")));
+
+            if (shouldSkip) {
+                continue;
+            }
+
+            // 현재 곡의 가사 라인들만 추가
+            if (currentSongTitle && trimmed) {
+                // 너무 짧은 텍스트는 제외 (1글자 또는 특수문자만)
+                if (trimmed.length > 1 && !/^[^\w\uAC00-\uD7AF]+$/.test(trimmed)) {
+                    currentLyrics.push(trimmed);
+                }
             }
         }
 
-        // 마지막 섹션 추가
-        if (currentSection && currentSection.lines.length > 0) {
-            sections.push(currentSection);
+        // 마지막 곡의 가사 추가
+        if (currentSongTitle && currentLyrics.length > 0) {
+            sections.push({
+                type: currentSongTitle,
+                lines: currentLyrics,
+            });
         }
 
-        return { title, sections };
+        return {
+            title: mainTitle || "추출된 가사",
+            sections,
+        };
     };
 
     const extractLyricsFromPDF = useCallback(async () => {
@@ -261,127 +325,68 @@ export default function LyricExtractorPage() {
         setParsedLyrics(null);
 
         try {
-            let accumulatedText = "";
-            const BATCH_SIZE = 2; // 이미지 2개씩 처리
+            const formData = new FormData();
 
             if (fileType === "pdf") {
-                // PDF 처리 로직 (기존)
-                for (let startPage = 1; startPage <= numPages!; startPage += BATCH_SIZE) {
-                    const endPage = Math.min(startPage + BATCH_SIZE - 1, numPages!);
+                // PDF 처리: 모든 페이지를 한 번에 전송
+                setStreamingText("📖 PDF 변환 중...\n");
 
-                    setStreamingText(
-                        accumulatedText + `\n📖 페이지 ${startPage}-${endPage} 처리 중...\n`
-                    );
-
-                    const formData = new FormData();
-
-                    for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-                        const imageBlob = await convertPdfPageToImage(file!, pageNum);
-                        formData.append("images", imageBlob, `page-${pageNum}.png`);
-                    }
-
-                    const response = await fetch("/api/extract-lyrics-combined", {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 413) {
-                            throw new Error(
-                                `페이지 ${startPage}-${endPage} 처리 중 파일 크기 초과. 페이지를 더 작은 단위로 나누어 시도해주세요.`
-                            );
-                        }
-                        throw new Error(`페이지 ${startPage}-${endPage} 처리 실패`);
-                    }
-
-                    if (!response.body) {
-                        throw new Error("응답 스트림을 받을 수 없습니다.");
-                    }
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-
-                        if (done) {
-                            if (startPage + BATCH_SIZE <= numPages!) {
-                                accumulatedText += `\n\n--- 페이지 ${startPage}-${endPage} 완료 ---\n\n`;
-                                setStreamingText(accumulatedText);
-                            }
-                            break;
-                        }
-
-                        const chunk = decoder.decode(value);
-                        accumulatedText += chunk;
-                        setStreamingText(accumulatedText);
-
-                        const parsed = parseStreamingLyrics(accumulatedText);
-                        if (parsed.sections.length > 0) {
-                            setParsedLyrics(parsed);
-                        }
-                    }
+                for (let pageNum = 1; pageNum <= numPages!; pageNum++) {
+                    setStreamingText((prev) => prev + `페이지 ${pageNum} 변환 중...\n`);
+                    const imageBlob = await convertPdfPageToImage(file!, pageNum);
+                    formData.append("images", imageBlob, `page-${pageNum}.png`);
                 }
+
+                setStreamingText((prev) => prev + "\n🤖 AI가 가사를 분석하고 있습니다...\n\n");
             } else if (fileType === "images") {
-                // 이미지 파일 처리 로직
-                for (let startIdx = 0; startIdx < imageFiles.length; startIdx += BATCH_SIZE) {
-                    const endIdx = Math.min(startIdx + BATCH_SIZE - 1, imageFiles.length - 1);
+                // 이미지 처리: 모든 이미지를 한 번에 전송
+                setStreamingText("🤖 AI가 가사를 분석하고 있습니다...\n\n");
 
-                    setStreamingText(
-                        accumulatedText + `\n📖 이미지 ${startIdx + 1}-${endIdx + 1} 처리 중...\n`
-                    );
-
-                    const formData = new FormData();
-
-                    for (let i = startIdx; i <= endIdx; i++) {
-                        formData.append("images", imageFiles[i], imageFiles[i].name);
-                    }
-
-                    const response = await fetch("/api/extract-lyrics-combined", {
-                        method: "POST",
-                        body: formData,
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 413) {
-                            throw new Error(
-                                `이미지 ${startIdx + 1}-${endIdx + 1} 처리 중 파일 크기 초과.`
-                            );
-                        }
-                        throw new Error(`이미지 ${startIdx + 1}-${endIdx + 1} 처리 실패`);
-                    }
-
-                    if (!response.body) {
-                        throw new Error("응답 스트림을 받을 수 없습니다.");
-                    }
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-
-                        if (done) {
-                            if (startIdx + BATCH_SIZE < imageFiles.length) {
-                                accumulatedText += `\n\n--- 이미지 ${startIdx + 1}-${endIdx + 1} 완료 ---\n\n`;
-                                setStreamingText(accumulatedText);
-                            }
-                            break;
-                        }
-
-                        const chunk = decoder.decode(value);
-                        accumulatedText += chunk;
-                        setStreamingText(accumulatedText);
-
-                        const parsed = parseStreamingLyrics(accumulatedText);
-                        if (parsed.sections.length > 0) {
-                            setParsedLyrics(parsed);
-                        }
-                    }
+                for (let i = 0; i < imageFiles.length; i++) {
+                    formData.append("images", imageFiles[i], imageFiles[i].name);
                 }
             }
 
-            // 모든 배치 완료 후 최종 파싱
+            // 한 번의 API 호출로 모든 이미지 처리
+            const response = await fetch("/api/extract-lyrics-combined", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                if (response.status === 413) {
+                    throw new Error("파일 크기가 너무 큽니다. 더 작은 파일을 사용해주세요.");
+                }
+                throw new Error("가사 추출 처리 실패");
+            }
+
+            if (!response.body) {
+                throw new Error("응답 스트림을 받을 수 없습니다.");
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedText = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    break;
+                }
+
+                const chunk = decoder.decode(value);
+                accumulatedText += chunk;
+                setStreamingText(accumulatedText);
+
+                // 실시간으로 파싱하여 미리보기 제공
+                const parsed = parseStreamingLyrics(accumulatedText);
+                if (parsed.sections.length > 0) {
+                    setParsedLyrics(parsed);
+                }
+            }
+
+            // 최종 파싱
             setIsStreamingComplete(true);
             const finalParsed = parseStreamingLyrics(accumulatedText);
             setParsedLyrics(finalParsed);
@@ -487,14 +492,15 @@ export default function LyricExtractorPage() {
                         </h3>
                         <ul className="text-xs text-blue-700 space-y-1 text-left">
                             <li>
-                                • <strong>PDF 파일:</strong> 단일 파일 업로드 (페이지별 자동 분할)
+                                • <strong>PDF 파일:</strong> 단일 파일 업로드 (모든 페이지 동시
+                                처리)
                             </li>
                             <li>
                                 • <strong>이미지 파일:</strong> 다중 선택 가능 (JPEG, PNG, WebP)
                             </li>
-                            <li>• 고품질 인식을 위해 원본 해상도를 유지합니다</li>
-                            <li>• 2개씩 나누어 순차 처리되어 안정적입니다</li>
-                            <li>• 각 배치별 처리 진행 상황을 실시간으로 확인할 수 있습니다</li>
+                            <li>• Google Cloud Vision API로 고정밀 OCR 수행</li>
+                            <li>• 모든 페이지를 한 번에 처리하여 빠르고 정확합니다</li>
+                            <li>• 실시간 스트리밍으로 처리 과정을 확인할 수 있습니다</li>
                             <li>
                                 • 가사가 명확하게 보이는 파일을 사용하면 더 정확한 결과를 얻을 수
                                 있습니다
