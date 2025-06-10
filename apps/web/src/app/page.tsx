@@ -133,6 +133,24 @@ export default async function Home() {
                             </CardBody>
                         </Card>
                     </Link>
+
+                    <Link href="/score-converter">
+                        <Card className="hover:bg-primary/5 transition-colors cursor-pointer h-full">
+                            <CardBody>
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-lg">
+                                        <MusicalNoteIcon className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold">악보 변환기</h3>
+                                        <p className="text-sm text-gray-500">
+                                            악보를 MIDI로 변환하고 키를 변경해보세요
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardBody>
+                        </Card>
+                    </Link>
                 </div>
             </main>
         </div>

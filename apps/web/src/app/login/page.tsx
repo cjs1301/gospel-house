@@ -1,5 +1,9 @@
+"use client";
+
 import { Button } from "@heroui/react";
-import { auth, signOut, signIn } from "@/auth";
+import { signIn } from "next-auth/react";
+import { useCallback, useState } from "react";
+
 function KakaoLogo({ className }: { className?: string }) {
     return (
         <svg
@@ -17,7 +21,26 @@ function KakaoLogo({ className }: { className?: string }) {
         </svg>
     );
 }
+
 export default function LoginPage() {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleKakaoLogin = useCallback(async () => {
+        try {
+            setIsLoading(true);
+
+            // 카카오 로그인 시도
+            await signIn("kakao", {
+                redirect: true,
+                redirectTo: "/",
+            });
+        } catch (error) {
+            console.error("로그인 중 오류 발생:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
             <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
@@ -26,26 +49,18 @@ export default function LoginPage() {
                     <p className="text-gray-500 text-center">교회 공동체를 위한 플랫폼</p>
                 </div>
                 <div className="space-y-4">
-                    <form
-                        action={async () => {
-                            "use server";
-                            const session = await auth();
-                            if (session) {
-                                await signOut({ redirect: false });
-                            }
-                            await signIn("kakao", {
-                                redirectTo: "/",
-                            });
-                        }}
+                    <Button
+                        type="button"
+                        isLoading={isLoading}
+                        onPress={handleKakaoLogin}
+                        className={`relative inline-flex items-center w-full h-14 px-[18px] rounded-[10px] text-base font-semibold cursor-pointer ${"border-none bg-[#FEE500] text-black"}`}
+                        isDisabled={isLoading}
                     >
-                        <Button
-                            type="submit"
-                            className={`relative inline-flex items-center w-full h-14 px-[18px] rounded-[10px] text-base font-semibold cursor-pointer ${"border-none bg-[#FEE500] text-black"}`}
-                        >
-                            <KakaoLogo className="w-6 h-6" />
-                            <span className="w-full text-center">카카오로 로그인</span>
-                        </Button>
-                    </form>
+                        <KakaoLogo className="w-6 h-6" />
+                        <span className="w-full text-center">
+                            {isLoading ? "로그인 중..." : "카카오로 로그인"}
+                        </span>
+                    </Button>
                 </div>
             </div>
         </div>
