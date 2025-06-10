@@ -15,14 +15,6 @@ export default {
         Kakao({
             clientId: process.env.AUTH_KAKAO_ID,
             clientSecret: process.env.AUTH_KAKAO_SECRET,
-            profile(profile) {
-                return {
-                    id: profile.id.toString(),
-                    name: profile.properties?.nickname ?? null,
-                    email: profile.kakao_account?.email ?? null,
-                    image: profile.properties?.profile_image ?? null,
-                };
-            },
         }),
     ],
     session: {

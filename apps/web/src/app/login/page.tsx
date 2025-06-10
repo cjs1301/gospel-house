@@ -2,7 +2,7 @@
 
 import { Button } from "@heroui/react";
 import { signIn } from "next-auth/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 function KakaoLogo({ className }: { className?: string }) {
@@ -26,7 +26,7 @@ function KakaoLogo({ className }: { className?: string }) {
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const handleKakaoLogin = useCallback(async () => {
+    const handleKakaoLogin = async () => {
         try {
             setIsLoading(true);
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
