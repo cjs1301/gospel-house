@@ -12,8 +12,8 @@ generator client {
  
 model User {
   id            String          @id @default(cuid())
-  name          String?
-  email         String?         @map("email")
+  name          String
+  email         String          @unique @map("email")
   emailVerified DateTime?       @map("email_verified")
   image         String?
   role          Role     @default(USER)  // Add service-level role
