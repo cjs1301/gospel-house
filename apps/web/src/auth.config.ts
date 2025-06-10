@@ -1,20 +1,23 @@
 import type { NextAuthConfig } from "next-auth";
-import Kakao from "next-auth/providers/kakao";
-
-if (!process.env.AUTH_KAKAO_ID) {
-    throw new Error("KAKAO_CLIENT_ID is not defined");
-}
-
-if (!process.env.AUTH_KAKAO_SECRET) {
-    throw new Error("KAKAO_CLIENT_SECRET is not defined");
-}
+import Google from "next-auth/providers/google";
 
 // Notice this is only an object, not a full Auth.js instance
 export default {
     providers: [
-        Kakao({
-            clientId: process.env.AUTH_KAKAO_ID,
-            clientSecret: process.env.AUTH_KAKAO_SECRET,
+        // Kakao({
+        //     clientId: process.env.AUTH_KAKAO_ID,
+        //     clientSecret: process.env.AUTH_KAKAO_SECRET,
+        // }),
+        Google({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            authorization: {
+                params: {
+                    prompt: "select_account",
+                    access_type: "offline",
+                    response_type: "code",
+                },
+            },
         }),
     ],
     session: {
