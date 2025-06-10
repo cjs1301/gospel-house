@@ -3,6 +3,7 @@
 import { Button } from "@heroui/react";
 import { signIn } from "next-auth/react";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 function KakaoLogo({ className }: { className?: string }) {
     return (
@@ -24,7 +25,7 @@ function KakaoLogo({ className }: { className?: string }) {
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
-
+    const router = useRouter();
     const handleKakaoLogin = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -34,6 +35,7 @@ export default function LoginPage() {
                 redirect: true,
                 redirectTo: "/",
             });
+            router.push("/");
         } catch (error) {
             console.error("로그인 중 오류 발생:", error);
         } finally {

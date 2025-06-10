@@ -144,7 +144,7 @@ export default async function Home() {
                                     <div>
                                         <h3 className="text-lg font-semibold">악보 변환기</h3>
                                         <p className="text-sm text-gray-500">
-                                            악보를 MIDI로 변환하고 키를 변경해보세요
+                                            악보를 MIDI로 변환하고 키를 변경해보세요 (준비중)
                                         </p>
                                     </div>
                                 </div>

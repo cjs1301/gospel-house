@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import vision from "@google-cloud/vision";
-import * as Tonal from "tonal";
-import { Midi } from "@tonejs/midi";
 
 // Google Cloud Vision 클라이언트 초기화
 const visionClient = new vision.ImageAnnotatorClient({
@@ -13,10 +11,13 @@ const visionClient = new vision.ImageAnnotatorClient({
     },
 });
 
-interface Note {
+interface ExtractedNote {
     pitch: string;
-    duration: number;
-    time: number;
+    octave: number;
+    duration: string;
+    measure: number;
+    beat: number;
+    confidence: number;
 }
 
 // 음표 기호와 실제 음높이 매핑
@@ -27,9 +28,29 @@ const NOTE_SYMBOLS: { [key: string]: string } = {
     "𝅘𝅥": "quarter",
     "𝅘𝅥𝅮": "eighth",
     "𝅘𝅥𝅯": "sixteenth",
+    "♬": "eighth",
+    "♫": "eighth",
 };
 
-async function extractNotesFromImage(imageBuffer: Buffer): Promise<Note[]> {
+// 음표 이름 매핑
+const NOTE_NAMES: { [key: string]: string } = {
+    도: "C",
+    레: "D",
+    미: "E",
+    파: "F",
+    솔: "G",
+    라: "A",
+    시: "B",
+    C: "C",
+    D: "D",
+    E: "E",
+    F: "F",
+    G: "G",
+    A: "A",
+    B: "B",
+};
+
+async function extractNotesFromImage(imageBuffer: Buffer): Promise<ExtractedNote[]> {
     try {
         // DOCUMENT_TEXT_DETECTION을 사용하여 더 나은 문서 처리
         const [result] = await visionClient.documentTextDetection({
@@ -44,8 +65,9 @@ async function extractNotesFromImage(imageBuffer: Buffer): Promise<Note[]> {
             return [];
         }
 
-        const notes: Note[] = [];
-        let currentTime = 0;
+        const notes: ExtractedNote[] = [];
+        let currentMeasure = 1;
+        let currentBeat = 1;
 
         // 페이지 단위로 처리
         for (const page of fullTextAnnotation.pages || []) {
@@ -59,20 +81,45 @@ async function extractNotesFromImage(imageBuffer: Buffer): Promise<Note[]> {
                         }
 
                         // 음표 기호 확인
-                        const noteSymbol = NOTE_SYMBOLS[wordText];
-                        if (noteSymbol) {
-                            // 음표의 위치를 기반으로 음높이 추정
+                        if (NOTE_SYMBOLS[wordText]) {
                             const y = block.boundingBox?.vertices?.[0]?.y || 0;
-                            // 오선의 위치를 기반으로 음높이 계산 (예시)
-                            const pitch = calculatePitch(y);
+                            const pitch = calculatePitchFromPosition(y);
 
                             notes.push({
-                                pitch,
-                                duration: getDuration(noteSymbol),
-                                time: currentTime,
+                                pitch: pitch.note,
+                                octave: pitch.octave,
+                                duration: NOTE_SYMBOLS[wordText],
+                                measure: currentMeasure,
+                                beat: currentBeat,
+                                confidence: block.confidence || 0.8,
                             });
 
-                            currentTime += getDuration(noteSymbol);
+                            currentBeat += getDurationValue(NOTE_SYMBOLS[wordText]);
+                            if (currentBeat > 4) {
+                                currentMeasure++;
+                                currentBeat = 1;
+                            }
+                        }
+
+                        // 음표 이름 확인 (도, 레, 미 등)
+                        if (NOTE_NAMES[wordText]) {
+                            const y = block.boundingBox?.vertices?.[0]?.y || 0;
+                            const octave = calculateOctaveFromPosition(y);
+
+                            notes.push({
+                                pitch: NOTE_NAMES[wordText],
+                                octave: octave,
+                                duration: "quarter", // 기본값
+                                measure: currentMeasure,
+                                beat: currentBeat,
+                                confidence: block.confidence || 0.7,
+                            });
+
+                            currentBeat++;
+                            if (currentBeat > 4) {
+                                currentMeasure++;
+                                currentBeat = 1;
+                            }
                         }
                     }
                 }
@@ -86,17 +133,29 @@ async function extractNotesFromImage(imageBuffer: Buffer): Promise<Note[]> {
     }
 }
 
-// 음표의 y좌표를 기반으로 음높이 계산 (예시 구현)
-function calculatePitch(y: number): string {
-    // 오선의 위치를 기반으로 음높이 계산
-    // 실제 구현에서는 더 정교한 알고리즘 필요
-    const pitches = ["C4", "D4", "E4", "F4", "G4", "A4", "B4"];
-    const index = Math.floor((y % 100) / (100 / pitches.length));
-    return pitches[index] || "C4";
+// 음표의 y좌표를 기반으로 음높이와 옥타브 계산
+function calculatePitchFromPosition(y: number): { note: string; octave: number } {
+    // 오선의 위치를 기반으로 음높이 계산 (실제로는 더 정교한 알고리즘 필요)
+    const lineHeight = 20; // 오선 간격 추정
+    const staffPosition = Math.floor(y / lineHeight) % 7;
+
+    const pitches = ["C", "D", "E", "F", "G", "A", "B"];
+    const note = pitches[staffPosition] || "C";
+    const octave = Math.floor(y / (lineHeight * 7)) + 4; // 4옥타브를 기준으로
+
+    return { note, octave: Math.max(3, Math.min(7, octave)) };
 }
 
-// 음표 종류에 따른 지속 시간 계산
-function getDuration(noteType: string): number {
+// y좌표를 기반으로 옥타브 계산
+function calculateOctaveFromPosition(y: number): number {
+    // 간단한 추정 로직
+    const baseOctave = 4;
+    const octaveShift = Math.floor((y - 200) / 100); // 200px를 기준으로
+    return Math.max(3, Math.min(7, baseOctave + octaveShift));
+}
+
+// 음표 종류에 따른 박자 값
+function getDurationValue(noteType: string): number {
     const durations: { [key: string]: number } = {
         whole: 4,
         half: 2,
@@ -105,32 +164,6 @@ function getDuration(noteType: string): number {
         sixteenth: 0.25,
     };
     return durations[noteType] || 1;
-}
-
-// 키 변경 함수
-function transposeNotes(notes: Note[], fromKey: string, toKey: string): Note[] {
-    const semitones = Tonal.Interval.semitones(Tonal.distance(fromKey, toKey));
-
-    return notes.map((note) => ({
-        ...note,
-        pitch: Tonal.Note.transpose(note.pitch, Tonal.Interval.fromSemitones(semitones)),
-    }));
-}
-
-// 노트 배열을 MIDI 파일로 변환
-function createMidiFile(notes: Note[]): Uint8Array {
-    const midi = new Midi();
-    const track = midi.addTrack();
-
-    notes.forEach((note) => {
-        track.addNote({
-            midi: Tonal.Note.midi(note.pitch) || 60,
-            time: note.time,
-            duration: note.duration,
-        });
-    });
-
-    return midi.toArray();
 }
 
 export async function POST(request: NextRequest) {
@@ -144,8 +177,6 @@ export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
         const image = formData.get("image") as File;
-        const currentKey = formData.get("currentKey") as string;
-        const targetKey = formData.get("targetKey") as string;
 
         if (!image) {
             return new Response(JSON.stringify({ error: "이미지가 제공되지 않았습니다." }), {
@@ -160,21 +191,10 @@ export async function POST(request: NextRequest) {
         // 이미지에서 음표 추출
         const notes = await extractNotesFromImage(buffer);
 
-        // 키 변경이 필요한 경우
-        const transposedNotes =
-            currentKey !== targetKey ? transposeNotes(notes, currentKey, targetKey) : notes;
-
-        // MIDI 파일 생성
-        const midiBuffer = createMidiFile(transposedNotes);
-
-        // MIDI 파일을 Base64로 인코딩
-        const midiBase64 = Buffer.from(midiBuffer).toString("base64");
-        const midiUrl = `data:audio/midi;base64,${midiBase64}`;
-
         return new Response(
             JSON.stringify({
-                midiUrl,
-                notes: transposedNotes.map((note) => note.pitch),
+                notes,
+                success: true,
             }),
             {
                 headers: {
@@ -183,10 +203,10 @@ export async function POST(request: NextRequest) {
             }
         );
     } catch (error) {
-        console.error("악보 변환 중 오류:", error);
+        console.error("음표 추출 중 오류:", error);
         return new Response(
             JSON.stringify({
-                error: "악보 변환 중 오류가 발생했습니다.",
+                error: "음표 추출 중 오류가 발생했습니다.",
                 details: error instanceof Error ? error.message : "Unknown error",
             }),
             { status: 500 }
