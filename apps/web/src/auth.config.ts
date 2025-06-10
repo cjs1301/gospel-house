@@ -1,12 +1,20 @@
 import type { NextAuthConfig } from "next-auth";
 import Kakao from "next-auth/providers/kakao";
 
+if (!process.env.AUTH_KAKAO_ID) {
+    throw new Error("KAKAO_CLIENT_ID is not defined");
+}
+
+if (!process.env.AUTH_KAKAO_SECRET) {
+    throw new Error("KAKAO_CLIENT_SECRET is not defined");
+}
+
 // Notice this is only an object, not a full Auth.js instance
 export default {
     providers: [
         Kakao({
-            clientId: process.env.KAKAO_CLIENT_ID!,
-            clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+            clientId: process.env.AUTH_KAKAO_ID,
+            clientSecret: process.env.AUTH_KAKAO_SECRET,
             profile(profile) {
                 return {
                     id: profile.id.toString(),
