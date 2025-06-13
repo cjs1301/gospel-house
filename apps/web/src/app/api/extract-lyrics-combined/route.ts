@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { ChatCompletionContentPart } from "openai/resources/chat/completions";
-// import { auth } from "@/auth";
 import vision from "@google-cloud/vision";
 
 // Google Cloud Vision 클라이언트 초기화
@@ -133,12 +132,6 @@ async function extractTextFromImage(imageBuffer: Buffer): Promise<OCRResult[]> {
 }
 
 export async function POST(request: NextRequest) {
-    // const session = await auth();
-    // if (!session) {
-    //     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-    //         status: 401,
-    //     });
-    // }
     const encoder = new TextEncoder();
 
     try {
