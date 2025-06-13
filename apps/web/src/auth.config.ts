@@ -46,9 +46,9 @@ export default {
             }
             return session;
         },
-        authorized: async ({ auth }) => {
-            return !!auth;
-        },
+        // authorized: async ({ auth }) => {
+        //     return !!auth;
+        // },
     },
     pages: {
         signIn: "/login",
